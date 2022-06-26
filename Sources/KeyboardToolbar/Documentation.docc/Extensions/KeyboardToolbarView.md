@@ -6,9 +6,10 @@
 
 - ``init()``
 
-### Adding Tools
+### Customizing Tools
 
 - ``groups``
+- ``showToolPickerDelay``
 
 ### UIInputViewAudioFeedback Conformance
 

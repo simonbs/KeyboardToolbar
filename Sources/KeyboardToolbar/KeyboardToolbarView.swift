@@ -10,6 +10,16 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
             reloadBarButtonItems()
         }
     }
+    /// Duration a user should long press an item to present the tool picker.
+    public var showToolPickerDelay: TimeInterval = 0.5 {
+        didSet {
+            if showToolPickerDelay != oldValue {
+                for button in toolButtons {
+                    button.showToolPickerDelay = showToolPickerDelay
+                }
+            }
+        }
+    }
     /// Enables clicks when selecting a tool.
     public var enableInputClicksWhenVisible: Bool {
         return true
@@ -25,6 +35,12 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         this.setShadowImage(UIImage(), forToolbarPosition: .any)
         return this
     }()
+    private var toolButtons: [KeyboardToolButton] {
+        let items = toolbar.items ?? []
+        return items.compactMap { barButtonItem in
+            return barButtonItem.customView as? KeyboardToolButton
+        }
+    }
 
     /// Initializes a new toolbar to be shown above a keyboard.
     public init() {
