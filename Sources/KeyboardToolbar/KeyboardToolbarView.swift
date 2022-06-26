@@ -96,6 +96,7 @@ private extension KeyboardToolbarView {
             for (idx, item) in group.items.enumerated() {
                 let button = KeyboardToolButton(item: item)
                 button.translatesAutoresizingMaskIntoConstraints = false
+                button.showToolPickerDelay = showToolPickerDelay
                 barButtonItems += [UIBarButtonItem(customView: button)]
                 if group.spacing != 0 && idx < group.items.count - 1 {
                     barButtonItems += [.fixedSpace(group.spacing)]
