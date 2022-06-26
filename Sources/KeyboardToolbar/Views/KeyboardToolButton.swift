@@ -21,14 +21,6 @@ final class KeyboardToolButton: UIButton {
     }
 
     var showToolPickerDelay: TimeInterval = 0.5
-    var imagePadding: CGFloat = 5
-    var backgroundInsets: UIEdgeInsets = .zero {
-        didSet {
-            if backgroundInsets != oldValue {
-                setNeedsLayout()
-            }
-        }
-    }
 
     override var intrinsicContentSize: CGSize {
         let imageWidth = imageView?.image?.size.width ?? 0
@@ -52,6 +44,14 @@ final class KeyboardToolButton: UIButton {
     private var toolPickerTimer: Timer?
     private let feedbackGenerator = UISelectionFeedbackGenerator()
     private let item: KeyboardToolGroupItem
+    private var imagePadding: CGFloat = 5
+    private var backgroundInsets: UIEdgeInsets = .zero {
+        didSet {
+            if backgroundInsets != oldValue {
+                setNeedsLayout()
+            }
+        }
+    }
 
     init(item: KeyboardToolGroupItem) {
         self.item = item
