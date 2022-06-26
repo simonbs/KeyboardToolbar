@@ -16,9 +16,6 @@ extension UIColor {
     static var keyboardToolForeground: UIColor {
         return inModule(colorName: "keyboard_tool_foreground")
     }
-    static var keyboardToolPicker: UIColor {
-        return inModule(colorName: "keyboard_tool_picker")
-    }
 }
 
 private extension UIColor {

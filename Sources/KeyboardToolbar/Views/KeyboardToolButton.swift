@@ -16,7 +16,7 @@ final class KeyboardToolButton: UIButton {
     }
     override var isHighlighted: Bool {
         didSet {
-            updateColors()
+            updateBackgroundColor()
         }
     }
 
@@ -62,7 +62,7 @@ final class KeyboardToolButton: UIButton {
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragInside)
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragOutside)
         setupRepresentativeTool()
-        updateColors()
+        updateBackgroundColor()
     }
 
     required init?(coder: NSCoder) {
@@ -85,7 +85,7 @@ final class KeyboardToolButton: UIButton {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            updateColors()
+            updateBackgroundColor()
         }
     }
 }
@@ -108,18 +108,20 @@ private extension KeyboardToolButton {
         titleLabel?.isHidden = isHidden
     }
 
-    private func updateColors() {
+    private func updateBackgroundColor() {
         switch item.style {
         case .primary:
             backgroundView.fillColor = .keyboardToolButtonPrimary
-            toolPickerBackgroundView.fillColor = .keyboardToolPicker
         case .secondary:
             backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .keyboardToolButtonSecondary
-            toolPickerBackgroundView.fillColor = .keyboardToolPicker
         }
     }
 
     @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
+        // Get the background color from a screenshot to ensure we get the right color for all keyboards.
+        // This is in particular relevant when using dark keyboards where both the keyboard and the buttons are transulcent.
+        let colorSamplePoint = CGPoint(x: bounds.midX, y: 2)
+        toolPickerBackgroundView.fillColor = color(at: colorSamplePoint) ?? .black
         UIDevice.current.playInputClick()
         cancelToolPickerTimer()
         guard !item.allTools.isEmpty else {
