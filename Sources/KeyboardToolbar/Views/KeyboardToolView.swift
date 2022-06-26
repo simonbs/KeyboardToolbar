@@ -22,19 +22,10 @@ final class KeyboardToolView: UIView {
             }
         }
     }
-    var fontSize: CGFloat {
-        get {
-            return titleLabel.font.pointSize
-        }
-        set {
-            titleLabel.font = titleLabel.font.withSize(newValue)
-        }
-    }
 
     private let titleLabel: UILabel = {
         let view = UILabel()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = .systemFont(ofSize: 20)
         view.textAlignment = .center
         return view
     }()
@@ -54,16 +45,21 @@ final class KeyboardToolView: UIView {
         imageView.frame = CGRect(origin: offset, size: size)
     }
 
-    func show(_ displayRepresentation: KeyboardToolDisplayRepresentation) {
+    func show(_ displayRepresentation: KeyboardToolDisplayRepresentation, atSize size: KeyboardToolContentSize) {
         prepareForReuse()
         switch displayRepresentation {
         case .text(let configuration):
             offset = configuration.offset
             titleLabel.text = configuration.text
+            titleLabel.font = configuration.font(ofSize: size)
             addSubview(titleLabel)
         case .image(let configuration):
             offset = .zero
-            imageView.image = configuration.image
+            imageView.image = configuration.image(ofSize: size)
+            addSubview(imageView)
+        case .symbol(let configuration):
+            offset = .zero
+            imageView.image = configuration.image(ofSize: size)
             addSubview(imageView)
         }
     }

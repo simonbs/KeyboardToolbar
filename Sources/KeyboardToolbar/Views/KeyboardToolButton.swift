@@ -6,20 +6,6 @@ final class KeyboardToolButton: UIButton {
         case right
     }
 
-    private enum ToolPickerContentSize {
-        case small
-        case large
-
-        var fontSize: CGFloat {
-            switch self {
-            case .small:
-                return 20
-            case .large:
-                return 30
-            }
-        }
-    }
-
     var showToolPickerDelay: TimeInterval = 0.5
 
     override var intrinsicContentSize: CGSize {
@@ -107,10 +93,13 @@ final class KeyboardToolButton: UIButton {
 private extension KeyboardToolButton {
     private func setupRepresentativeTool() {
         switch item.representativeTool.displayRepresentation {
-        case .text(let textConfiguration):
-            setTitle(textConfiguration.text, for: .normal)
-        case .image(let imageConfiguration):
-            setImage(imageConfiguration.image, for: .normal)
+        case .text(let configuration):
+            titleLabel?.font = configuration.font(ofSize: .small)
+            setTitle(configuration.text, for: .normal)
+        case .image(let configuration):
+            setImage(configuration.image(ofSize: .small), for: .normal)
+        case .symbol(let configuration):
+            setImage(configuration.image(ofSize: .small), for: .normal)
         }
     }
 
@@ -139,10 +128,10 @@ private extension KeyboardToolButton {
         setContentHidden(true)
         feedbackGenerator.prepare()
         if showToolPickerDelay > 0 {
-            presentToolPicker(with: [item.representativeTool], ofContentSize: .large)
+            presentToolPicker(with: [item.representativeTool], atSize: .large)
             schedulePresentingAllTools()
         } else {
-            presentToolPicker(with: item.allTools, ofContentSize: .large)
+            presentToolPicker(with: item.allTools, atSize: .large)
         }
     }
 
@@ -180,21 +169,21 @@ private extension KeyboardToolButton {
     @objc private func toolPickerTimerTriggered() {
         feedbackGenerator.selectionChanged()
         cancelToolPickerTimer()
-        presentToolPicker(with: item.allTools, ofContentSize: .small)
+        presentToolPicker(with: item.allTools, atSize: .small)
     }
 
-    private func presentToolPicker(with tools: [KeyboardTool], ofContentSize contentSize: ToolPickerContentSize) {
+    private func presentToolPicker(with tools: [KeyboardTool], atSize contentSize: KeyboardToolContentSize) {
         if toolPickerBackgroundView.superview == nil {
             addSubview(toolPickerBackgroundView)
         }
         if toolPickerView.superview == nil {
             addSubview(toolPickerView)
         }
-        toolPickerView.toolDisplayRepresentations = tools.map(\.displayRepresentation)
+        let displayRepresentations = tools.map(\.displayRepresentation)
+        toolPickerView.show(displayRepresentations, atSize: contentSize)
         toolPickerView.leadingSpacing = 10
         toolPickerView.trailingSpacing = 10
         toolPickerView.toolSize = frame.size
-        toolPickerView.fontSize = contentSize.fontSize
         toolPickerBackgroundView.handleSize = KeyboardToolPickerFrameCalculator.handleSize(from: self)
         let toolPickerLayout = toolPickerLayout(forShowingNumberOfTools: tools.count)
         toolPickerView.showReversed = toolPickerLayout.isReverse
@@ -210,7 +199,7 @@ private extension KeyboardToolButton {
     }
 
     private func updateHiglightedTool(for event: UIEvent) {
-        if toolPickerView.toolDisplayRepresentations.count > 1, let touch = event.allTouches?.first {
+        if toolPickerView.toolCount > 1, let touch = event.allTouches?.first {
             let location = touch.location(in: toolPickerView)
             let oldHighlightedIndex = toolPickerView.highlightedIndex
             toolPickerView.highlightTool(closestTo: location)

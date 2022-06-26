@@ -33,13 +33,6 @@ final class KeyboardToolPickerView: UIView {
             }
         }
     }
-    var toolDisplayRepresentations: [KeyboardToolDisplayRepresentation] = [] {
-        didSet {
-            highlightedIndex = nil
-            removeToolViews()
-            addToolViews()
-        }
-    }
     private(set) var highlightedIndex: Int?
     var showReversed = false {
         didSet {
@@ -48,21 +41,18 @@ final class KeyboardToolPickerView: UIView {
             }
         }
     }
-    var fontSize: CGFloat = 20 {
-        didSet {
-            for toolView in toolViews {
-                toolView.fontSize = fontSize
-            }
-        }
+    var toolCount: Int {
+        return displayRepresentations.count
     }
     override var intrinsicContentSize: CGSize {
-        let totalViewWidth = CGFloat(toolDisplayRepresentations.count) * toolSize.width
-        let totalSpacing = max(CGFloat(toolDisplayRepresentations.count - 1), 0) * toolSpacing
+        let totalViewWidth = CGFloat(displayRepresentations.count) * toolSize.width
+        let totalSpacing = max(CGFloat(displayRepresentations.count - 1), 0) * toolSpacing
         let width = leadingSpacing + trailingSpacing + totalViewWidth + totalSpacing
         return CGSize(width: width, height: toolSize.height)
     }
 
     private var toolViews: [KeyboardToolView] = []
+    private var displayRepresentations: [KeyboardToolDisplayRepresentation] = []
     private let highlightBackgroundView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 5
@@ -84,6 +74,13 @@ final class KeyboardToolPickerView: UIView {
         super.layoutSubviews()
         layoutToolViews()
         layoutHighlightBackgroundView()
+    }
+
+    func show(_ displayRepresentations: [KeyboardToolDisplayRepresentation], atSize contentSize: KeyboardToolContentSize) {
+        self.displayRepresentations = displayRepresentations
+        highlightedIndex = nil
+        removeToolViews()
+        addToolViews(ofSize: contentSize)
     }
 
     func highlightTool(closestTo location: CGPoint) {
@@ -113,13 +110,12 @@ private extension KeyboardToolPickerView {
         toolViews = []
     }
 
-    private func addToolViews() {
-        for toolDisplay in toolDisplayRepresentations {
+    private func addToolViews(ofSize contentSize: KeyboardToolContentSize) {
+        for toolDisplay in displayRepresentations {
             let toolView = KeyboardToolView()
             toolView.foregroundColor = .keyboardToolForeground
             toolView.highlightedForegroundColor = .keyboardToolForegroundHighlighted
-            toolView.fontSize = fontSize
-            toolView.show(toolDisplay)
+            toolView.show(toolDisplay, atSize: contentSize)
             addSubview(toolView)
             toolViews.append(toolView)
         }
@@ -138,7 +134,7 @@ private extension KeyboardToolPickerView {
     }
 
     private func frameForTool(at index: Int) -> CGRect {
-        let adjustedIndex = showReversed ? toolDisplayRepresentations.count - index - 1 : index
+        let adjustedIndex = showReversed ? displayRepresentations.count - index - 1 : index
         let xPosition = leadingSpacing + CGFloat(adjustedIndex) * (toolSize.width + toolSpacing)
         let yPosition = (bounds.height - toolSize.height) / 2
         let origin = CGPoint(x: xPosition, y: yPosition)

@@ -32,30 +32,21 @@ public struct BlockKeyboardTool: KeyboardTool {
 
     /// Initializes a tool that displays an image.
     /// - Parameters:
-    ///   - image: he image to use when displaying the tool.
+    ///   - smallImage: The image to use when displaying the tool.
+    ///   - largeImage: The image to use when momentarily displaying the tool picker.
     ///   - actionHandler: The block to be called when the tool is selected.
-    public init(image: UIImage, action actionHandler: @escaping () -> Void) {
-        let displayRepresentation: KeyboardToolDisplayRepresentation = .image(image)
+    public init(smallImage: UIImage, largeImage: UIImage, action actionHandler: @escaping () -> Void) {
+        let displayRepresentation: KeyboardToolDisplayRepresentation = .image(small: smallImage, large: largeImage)
         self.init(displayRepresentation: displayRepresentation, action: actionHandler)
     }
 
     /// Initializes a tool that displays a SF Symbol.
     /// - Parameters:
     ///   - symbolName: The name of the symbol to use when displaying the tool.
-    ///   - pointSize: The point size of the symbol.
+    ///   - pointSize: The point size of the symbol. Defaults to 14.
     ///   - actionHandler: The block to be called when the tool is selected.
     public init(symbolName: String, pointSize: CGFloat = 14, action actionHandler: @escaping () -> Void) {
         let displayRepresentation: KeyboardToolDisplayRepresentation = .symbol(named: symbolName, pointSize: pointSize)
-        self.init(displayRepresentation: displayRepresentation, action: actionHandler)
-    }
-
-    /// Initializes a tool that displays a SF Symbol.
-    /// - Parameters:
-    ///   - symbolName: The name of the symbol to use when displaying the tool.
-    ///   - configuration: The image configuration to be applied to the created image.
-    ///   - actionHandler: The block to be called when the tool is selected.
-    public init(symbolName: String, withConfiguration configuration: UIImage.Configuration?, action actionHandler: @escaping () -> Void) {
-        let displayRepresentation: KeyboardToolDisplayRepresentation = .symbol(named: symbolName, withConfiguration: configuration)
         self.init(displayRepresentation: displayRepresentation, action: actionHandler)
     }
 
