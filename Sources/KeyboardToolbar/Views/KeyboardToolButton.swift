@@ -127,14 +127,17 @@ private extension KeyboardToolButton {
         toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
         UIDevice.current.playInputClick()
         cancelToolPickerTimer()
-        guard !item.allTools.isEmpty else {
+        let shouldPresentPicker = item.style == .primary || !item.allTools.isEmpty
+        guard shouldPresentPicker else {
             return
         }
         setContentHidden(true)
         feedbackGenerator.prepare()
         if showToolPickerDelay > 0 {
             presentToolPicker(with: [item.representativeTool], atSize: .large)
-            schedulePresentingAllTools()
+            if !item.allTools.isEmpty {
+                schedulePresentingAllTools()
+            }
         } else {
             presentToolPicker(with: item.allTools, atSize: .large)
         }
