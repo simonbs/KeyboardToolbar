@@ -7,17 +7,17 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsimonbs%2FKeyboardToolbar%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/simonbs/KeyboardToolbar)
 [![](https://img.shields.io/badge/twitter-@simonbs-blue.svg?style=flat)]([https://swiftpackageindex.com/simonbs/Runestone](https://twitter.com/simonbs))
 
-## Overview
+## 👀 Overview
 
 Use KeyboardToolbar to add tools as an input accessory view to a UITextField, UITextView, or any other view conforming to UITextInput.
 
 KeyboardToolbar creates buttons with an iOS-like appearance and behavior.
 
-## Documentation
+## 📖 Documentation
 
 The public interface is documented in the Swift files and can be found in [KeyboardToolbar/Sources/KeyboardToolbar](https://github.com/simonbs/KeyboardToolbar/tree/main/Sources/KeyboardToolbar). The framework also has DocC documentation that can be built by opening the Swift package in Xcode and selecting Product -> Build Documentation in the menu bar.
 
-## Installation
+## 📦 Adding the Package
 
 KeyboardToolbar is distributed using the [Swift Package Manager](https://www.swift.org/package-manager/). Install it in a project by adding it as a dependency in your Package.swift manifest or through “Package Dependencies” in project settings.
 
@@ -29,7 +29,7 @@ let package = Package(
 )
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
 The best way to understand how KeyboardToolbar is integrated into your project is by having a look at the [Example project](Example/Example) in this repository.
 
