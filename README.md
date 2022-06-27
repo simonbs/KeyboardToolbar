@@ -3,6 +3,10 @@
 ![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard.png#gh-light-mode-only)
 ![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard~dark.png#gh-dark-mode-only)
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsimonbs%2FKeyboardToolbar%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/simonbs/KeyboardToolbar)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsimonbs%2FKeyboardToolbar%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/simonbs/KeyboardToolbar)
+[![](https://img.shields.io/badge/twitter-@simonbs-blue.svg?style=flat)]([https://swiftpackageindex.com/simonbs/Runestone](https://twitter.com/simonbs))
+
 ## Overview
 
 Use KeyboardToolbar to add tools as an input accessory view to a UITextField, UITextView, or any other view conforming to UITextInput.
