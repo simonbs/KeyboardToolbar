@@ -1,7 +1,5 @@
 # KeyboardToolbar
 
-Add tools above your keyboard with iOS-like keyboard buttons.
-
 ![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard.png#gh-light-mode-only)
 ![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard~dark.png#gh-dark-mode-only)
 
