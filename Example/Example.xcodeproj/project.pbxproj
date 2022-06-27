@@ -78,7 +78,6 @@
 				72E507AA286770CC00B77A1C /* SceneDelegate.swift */,
 				72E507B1286770CD00B77A1C /* Assets.xcassets */,
 				72E507B3286770CD00B77A1C /* LaunchScreen.storyboard */,
-				72E507C02867725C00B77A1C /* Tools */,
 			);
 			path = Example;
 			sourceTree = "<group>";
@@ -89,13 +88,6 @@
 				72E507BF2867719500B77A1C /* KeyboardTools */,
 			);
 			name = Packages;
-			sourceTree = "<group>";
-		};
-		72E507C02867725C00B77A1C /* Tools */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Tools;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
