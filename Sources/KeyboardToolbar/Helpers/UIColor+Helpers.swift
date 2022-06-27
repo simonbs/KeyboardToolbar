@@ -1,9 +1,6 @@
 import UIKit
 
 extension UIColor {
-    static var keyboardBackground: UIColor {
-        return inModule(colorName: "keyboard_background")
-    }
     static var keyboardToolButtonPrimary: UIColor {
         return inModule(colorName: "keyboard_tool_button_primary")
     }
