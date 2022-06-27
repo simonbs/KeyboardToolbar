@@ -38,6 +38,12 @@ final class KeyboardToolButton: UIButton {
             }
         }
     }
+    private var toolPickerBackgroundColor: UIColor {
+        // Get the background color from a screenshot to ensure we get the right color for all keyboards.
+        // This is in particular relevant when using dark keyboards where both the keyboard and the buttons are transulcent.
+        let colorSamplePoint = CGPoint(x: frame.size.width / 2, y: 0)
+        return color(at: colorSamplePoint) ?? .black
+    }
 
     init(item: KeyboardToolGroupItem) {
         self.item = item
@@ -118,10 +124,7 @@ private extension KeyboardToolButton {
     }
 
     @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
-        // Get the background color from a screenshot to ensure we get the right color for all keyboards.
-        // This is in particular relevant when using dark keyboards where both the keyboard and the buttons are transulcent.
-        let colorSamplePoint = CGPoint(x: bounds.midX, y: 2)
-        toolPickerBackgroundView.fillColor = color(at: colorSamplePoint) ?? .black
+        toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
         UIDevice.current.playInputClick()
         cancelToolPickerTimer()
         guard !item.allTools.isEmpty else {
