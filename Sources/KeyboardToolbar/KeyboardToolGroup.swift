@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// A group of items to be displayed in a toolbar.
