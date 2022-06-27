@@ -27,7 +27,7 @@ let package = Package(
 )
 ```
 
-## Usage
+## Getting Started
 
 The best way to understand how KeyboardToolbar is integrated into your project is by having a look at the [Example project](Example/Example) in this repository.
 
