@@ -19,6 +19,11 @@ final class MainViewController: UIViewController {
         textView.inputAccessoryView = keyboardToolbarView
         setupKeyboardTools()
     }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        textView.becomeFirstResponder()
+    }
 }
 
 private extension MainViewController {
