@@ -15,7 +15,9 @@ KeyboardToolbar creates buttons with an iOS-like appearance and behavior.
 
 ## 📖 Documentation
 
-The public interface is documented in the Swift files and can be found in [KeyboardToolbar/Sources/KeyboardToolbar](https://github.com/simonbs/KeyboardToolbar/tree/main/Sources/KeyboardToolbar). The framework also has DocC documentation that can be built by opening the Swift package in Xcode and selecting Product -> Build Documentation in the menu bar.
+The public interface is documented in the Swift files and can be found in [KeyboardToolbar/Sources/KeyboardToolbar](https://github.com/simonbs/KeyboardToolbar/tree/main/Sources/KeyboardToolbar). You can also [read the documention on Swift Package Index](https://swiftpackageindex.com/simonbs/KeyboardToolbar).
+
+Lastly, you can also build the documentation yourself by opening the Swift package in Xcode and selecting Product > Build Documentation in the menu bar.
 
 ## 📦 Adding the Package
 
