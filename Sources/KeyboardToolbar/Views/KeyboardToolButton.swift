@@ -62,9 +62,9 @@ final class KeyboardToolButton: UIButton {
         }
         addSubview(backgroundView)
         addTarget(self, action: #selector(touchDown(_:event:)), for: .touchDown)
-        addTarget(self, action: #selector(touchUp), for: .touchUpInside)
-        addTarget(self, action: #selector(touchUp), for: .touchUpOutside)
-        addTarget(self, action: #selector(touchUp), for: .touchCancel)
+        addTarget(self, action: #selector(touchUpInside), for: .touchUpInside)
+        addTarget(self, action: #selector(touchUpOutside), for: .touchUpOutside)
+        addTarget(self, action: #selector(touchCancelled), for: .touchCancel)
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragInside)
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragOutside)
         setupRepresentativeTool()
@@ -142,17 +142,31 @@ private extension KeyboardToolButton {
             presentToolPicker(with: item.allTools, atSize: .large)
         }
     }
-
-    @objc private func touchUp() {
+    
+    @objc private func touchUpInside() {
+        cleanupAfterTouch()
+        handleTouchUp(insideButton: true)
+    }
+    @objc private func touchUpOutside() {
+        cleanupAfterTouch()
+        handleTouchUp(insideButton: false)
+    }
+    @objc private func touchCancelled() {
+        cleanupAfterTouch()
+    }
+    private func cleanupAfterTouch() {
         setContentHidden(false)
         cancelToolPickerTimer()
         backgroundView.isHidden = false
         toolPickerView.removeFromSuperview()
         toolPickerBackgroundView.removeFromSuperview()
+    }
+    private func handleTouchUp(insideButton: Bool) {
         if let highlightedIndex = toolPickerView.highlightedIndex {
             let tool = item.allTools[highlightedIndex]
             tool.performAction()
-        } else {
+        } else if insideButton {
+            // If not using the picker menu, we should only act on a press if still inside the main button
             item.representativeTool.performAction()
         }
     }
