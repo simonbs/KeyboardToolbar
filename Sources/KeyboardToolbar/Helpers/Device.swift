@@ -12,6 +12,7 @@ enum Device {
     case unknown
 
     static var current: Device {
+        #if !os(xrOS)
         let bounds = UIScreen.main.nativeBounds
         if bounds.size.width == 750 && bounds.size.height == 1_334 {
             return .iPhone8
@@ -35,5 +36,8 @@ enum Device {
             #endif
             return .unknown
         }
+        #else
+        return .unknown
+        #endif
     }
 }

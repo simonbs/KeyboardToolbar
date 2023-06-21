@@ -20,10 +20,12 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
             }
         }
     }
+#if !os(xrOS)
     /// Enables clicks when selecting a tool.
     public var enableInputClicksWhenVisible: Bool {
         return true
     }
+#endif
 
     private let keyboardContentLayoutGuide = UILayoutGuide()
     private var keyboardContentLayoutGuideLeadingConstraint: NSLayoutConstraint?
@@ -44,7 +46,7 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
 
     /// Initializes a new toolbar to be shown above a keyboard.
     public init() {
-        let frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 46)
+        let frame = CGRect(x: 0, y: 0, width: 0, height: 46)
         super.init(frame: frame, inputViewStyle: .keyboard)
         setupView()
         setupLayout()

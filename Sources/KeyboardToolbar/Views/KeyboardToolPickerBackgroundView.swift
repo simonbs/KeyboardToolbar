@@ -189,7 +189,11 @@ private extension KeyboardToolPickerBackgroundView {
     private func drawStroke(of path: CGPath, to context: CGContext) {
         context.saveGState()
         context.setStrokeColor(strokeColor.cgColor)
+#if !os(xrOS)
         context.setLineWidth(1 / UIScreen.main.scale)
+#else
+        context.setLineWidth(1)
+#endif
         context.addPath(path)
         context.strokePath()
         context.restoreGState()

@@ -2,6 +2,7 @@ import UIKit
 
 enum InputToolMargin {
     static var rawValue: CGFloat {
+#if !os(xrOS)
         if UIDevice.current.userInterfaceIdiom == .pad {
             return 5
         } else if UIScreen.main.bounds.height > UIScreen.main.bounds.width {
@@ -18,5 +19,8 @@ enum InputToolMargin {
                 return 78
             }
         }
+#else
+        return 5
+#endif
     }
 }

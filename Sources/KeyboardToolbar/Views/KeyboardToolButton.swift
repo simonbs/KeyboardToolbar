@@ -28,7 +28,9 @@ final class KeyboardToolButton: UIButton {
     private let toolPickerView = KeyboardToolPickerView()
     private let toolPickerBackgroundView = KeyboardToolPickerBackgroundView()
     private var toolPickerTimer: Timer?
+    #if !os(xrOS)
     private let feedbackGenerator = UISelectionFeedbackGenerator()
+    #endif
     private let item: KeyboardToolGroupItem
     private var imagePadding: CGFloat = 5
     private var backgroundInsets: UIEdgeInsets = .zero {
@@ -125,14 +127,18 @@ private extension KeyboardToolButton {
 
     @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
         toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
+#if !os(xrOS)
         UIDevice.current.playInputClick()
+#endif
         cancelToolPickerTimer()
         let shouldPresentPicker = item.style == .primary || !item.allTools.isEmpty
         guard shouldPresentPicker else {
             return
         }
         setContentHidden(true)
+        #if !os(xrOS)
         feedbackGenerator.prepare()
+        #endif
         if showToolPickerDelay > 0 {
             presentToolPicker(with: [item.representativeTool], atSize: .large)
             if !item.allTools.isEmpty {
@@ -175,7 +181,9 @@ private extension KeyboardToolButton {
     }
 
     @objc private func toolPickerTimerTriggered() {
+        #if !os(xrOS)
         feedbackGenerator.selectionChanged()
+        #endif
         cancelToolPickerTimer()
         presentToolPicker(with: item.allTools, atSize: .small)
     }
@@ -212,7 +220,9 @@ private extension KeyboardToolButton {
             let oldHighlightedIndex = toolPickerView.highlightedIndex
             toolPickerView.highlightTool(closestTo: location)
             if toolPickerView.highlightedIndex != oldHighlightedIndex {
+#if !os(xrOS)
                 feedbackGenerator.selectionChanged()
+#endif
             }
         } else {
             toolPickerView.clearHighlightedTool()
