@@ -113,8 +113,8 @@ private extension KeyboardToolPickerView {
     private func addToolViews(ofSize contentSize: KeyboardToolContentSize) {
         for toolDisplay in displayRepresentations {
             let toolView = KeyboardToolView()
-            toolView.foregroundColor = .keyboardToolForeground
-            toolView.highlightedForegroundColor = .keyboardToolForegroundHighlighted
+            toolView.foregroundColor = .keyboardToolPickerForeground
+            toolView.highlightedForegroundColor = .keyboardToolPickerForegroundHighlighted
             toolView.show(toolDisplay, atSize: contentSize)
             addSubview(toolView)
             toolViews.append(toolView)

@@ -5,21 +5,9 @@ struct KeyboardToolPickerBackgroundPathConfiguration: Equatable {
     let handleSize: CGSize
     let preferredHandleXPosition: CGFloat
     let shadowBlur: CGFloat = 5
-    var handleShadowLength: CGFloat {
-        if #available(iOS 26, *) {
-            0
-        } else {
-            1
-        }
-    }
+    let handleShadowLength = KeyboardToolButtonStyle.shadowLength
     let plateRadius: CGFloat = 10
-    var handleRadius: CGFloat {
-        if #available(iOS 26, *) {
-            8
-        } else {
-            5
-        }
-    }
+    let handleRadius = KeyboardToolButtonStyle.cornerRadius
 
     init(bounds: CGRect, handleSize: CGSize, preferredHandleXPosition: CGFloat) {
         self.bounds = bounds

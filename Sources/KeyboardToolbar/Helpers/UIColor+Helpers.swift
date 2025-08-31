@@ -2,21 +2,25 @@ import UIKit
 
 extension UIColor {
     static var keyboardToolButtonPrimary: UIColor {
-        return inModule(colorName: "keyboard_tool_button_primary")
+        if #available(iOS 26, *) {
+            inModule(colorName: "keyboard_tool_button_primary")
+        } else {
+            inModule(colorName: "keyboard_tool_button_primary_pre_ios26")
+        }
     }
     static var keyboardToolButtonSecondary: UIColor {
-        return inModule(colorName: "keyboard_tool_button_secondary")
+        inModule(colorName: "keyboard_tool_button_secondary_pre_ios26")
     }
-    static var keyboardToolForegroundHighlighted: UIColor {
-        return inModule(colorName: "keyboard_tool_foreground_highlighted")
+    static var keyboardToolPickerForegroundHighlighted: UIColor {
+        inModule(colorName: "keyboard_tool_picker_foreground_highlighted")
     }
-    static var keyboardToolForeground: UIColor {
-        return inModule(colorName: "keyboard_tool_foreground")
+    static var keyboardToolPickerForeground: UIColor {
+        inModule(colorName: "keyboard_tool_picker_foreground")
     }
 }
 
 private extension UIColor {
     private static func inModule(colorName: String) -> UIColor {
-        return UIColor(named: colorName, in: .module, compatibleWith: nil)!
+        UIColor(named: colorName, in: .module, compatibleWith: nil)!
     }
 }

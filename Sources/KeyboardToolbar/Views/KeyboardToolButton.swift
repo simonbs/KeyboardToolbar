@@ -123,11 +123,16 @@ private extension KeyboardToolButton {
     }
 
     private func updateBackgroundColor() {
-        switch item.style {
-        case .primary:
+        if #available(iOS 26, *) {
+            // iOS 26 does not seem to have more than a single keyboard button appearance.
             backgroundView.fillColor = .keyboardToolButtonPrimary
-        case .secondary:
-            backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .keyboardToolButtonSecondary
+        } else {
+            switch item.style {
+            case .primary:
+                backgroundView.fillColor = .keyboardToolButtonPrimary
+            case .secondary:
+                backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .keyboardToolButtonSecondary
+            }
         }
     }
 
