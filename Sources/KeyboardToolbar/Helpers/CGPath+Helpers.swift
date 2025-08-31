@@ -1,13 +1,19 @@
 import UIKit
 
-struct KeyboardToolPickerBackgroundPathConfiguration {
+struct KeyboardToolPickerBackgroundPathConfiguration: Equatable {
     let bounds: CGRect
-    let shadowBlur: CGFloat
     let handleSize: CGSize
     let preferredHandleXPosition: CGFloat
-    let handleShadowLength: CGFloat
-    let plateRadius: CGFloat
-    let handleRadius: CGFloat
+    let shadowBlur: CGFloat = 5
+    let handleShadowLength: CGFloat = 1
+    let plateRadius: CGFloat = 10
+    let handleRadius: CGFloat = 5
+
+    init(bounds: CGRect, handleSize: CGSize, preferredHandleXPosition: CGFloat) {
+        self.bounds = bounds
+        self.handleSize = handleSize
+        self.preferredHandleXPosition = preferredHandleXPosition
+    }
 
     fileprivate var insetBounds: CGRect {
          bounds.inset(by: UIEdgeInsets(top: shadowBlur, left: shadowBlur, bottom: 0, right: shadowBlur))

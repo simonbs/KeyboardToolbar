@@ -23,10 +23,19 @@ final class KeyboardToolButton: UIButton {
     private let backgroundView: KeyboardToolButtonBackgroundView = {
         let view = KeyboardToolButtonBackgroundView()
         view.isUserInteractionEnabled = false
+        if #available(iOS 26, *) {
+            view.shadowLength = 0
+        }
         return view
     }()
     private let toolPickerView = KeyboardToolPickerView()
-    private let toolPickerBackgroundView = KeyboardToolPickerBackgroundView()
+    private let toolPickerBackgroundView: KeyboardToolPickerBackgroundView = {
+        let view = KeyboardToolPickerBackgroundView()
+        if #available(iOS 26, *) {
+            view.isBlurBackgroundEnabled = true
+        }
+        return view
+    }()
     private var toolPickerTimer: Timer?
     #if !os(xrOS)
     private let feedbackGenerator = UISelectionFeedbackGenerator()
@@ -231,9 +240,17 @@ private extension KeyboardToolButton {
 
     private func toolPickerLayout(forShowingNumberOfTools toolCount: Int) -> KeyboardToolPickerLayout {
         if toolCount == 1 {
-            return KeyboardToolPickerFrameCalculator.singleToolLayout(forPresenting: toolPickerView, and: toolPickerBackgroundView, from: self)
+            return KeyboardToolPickerFrameCalculator.singleToolLayout(
+                forPresenting: toolPickerView,
+                and: toolPickerBackgroundView,
+                from: self
+            )
         } else {
-            return KeyboardToolPickerFrameCalculator.multipleToolsLayout(forPresenting: toolPickerView, and: toolPickerBackgroundView, from: self)
+            return KeyboardToolPickerFrameCalculator.multipleToolsLayout(
+                forPresenting: toolPickerView,
+                and: toolPickerBackgroundView,
+                from: self
+            )
         }
     }
 }

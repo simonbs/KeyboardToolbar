@@ -33,7 +33,6 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     private let backgroundView: UIView = {
         let this = UIView()
         this.translatesAutoresizingMaskIntoConstraints = false
-        this.backgroundColor = .red
         return this
     }()
     private let stackView: UIStackView = {
