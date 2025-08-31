@@ -14,6 +14,7 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     public var showToolPickerDelay: TimeInterval = 0.5 {
         didSet {
             if showToolPickerDelay != oldValue {
+                let toolButtons = collectToolButtons(from: stackView)
                 for button in toolButtons {
                     button.showToolPickerDelay = showToolPickerDelay
                 }
@@ -43,10 +44,6 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         this.distribution = .equalSpacing
         return this
     }()
-
-    private var toolButtons: [KeyboardToolButton] {
-        return collectToolButtons(from: stackView)
-    }
 
     /// Initializes a new toolbar to be shown above a keyboard.
     public init() {
