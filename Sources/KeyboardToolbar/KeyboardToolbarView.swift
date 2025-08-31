@@ -63,12 +63,7 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
             height += 20 // Accomodates for bottom distance to keyboard and spacing above and below stack view
         }
         let frame = CGRect(x: 0, y: 0, width: 0, height: height)
-        let inputViewStyle: UIInputView.Style = if #available(iOS 16, *) {
-            .default
-        } else {
-            .keyboard
-        }
-        super.init(frame: frame, inputViewStyle: inputViewStyle)
+        super.init(frame: frame, inputViewStyle: .keyboard)
         backgroundColor = .clear
         if #available(iOS 26, *) {
             glassBackgroundView.mask = glassBackgroundMaskView
