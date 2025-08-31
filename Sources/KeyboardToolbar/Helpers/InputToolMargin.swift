@@ -1,12 +1,16 @@
 import UIKit
 
 enum InputToolMargin {
-    static var rawValue: CGFloat {
+    static func rawValue(for traitCollection: UITraitCollection) -> CGFloat {
 #if !os(xrOS)
         if UIDevice.current.userInterfaceIdiom == .pad {
-            return 5
+            return traitCollection.horizontalSizeClass == .regular ? 10 : 6
         } else if UIScreen.main.bounds.height > UIScreen.main.bounds.width {
-            return 3
+            if #available(iOS 26, *) {
+                return 7
+            } else {
+                return 3
+            }
         } else {
             switch Device.current {
             case .iPhone8:

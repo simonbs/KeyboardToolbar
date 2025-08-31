@@ -23,9 +23,6 @@ final class KeyboardToolButton: UIButton {
     private let backgroundView: KeyboardToolButtonBackgroundView = {
         let view = KeyboardToolButtonBackgroundView()
         view.isUserInteractionEnabled = false
-        if #available(iOS 26, *) {
-            view.shadowLength = 0
-        }
         return view
     }()
     private let toolPickerView = KeyboardToolPickerView()

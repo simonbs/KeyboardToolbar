@@ -1,13 +1,6 @@
 import UIKit
 
 final class KeyboardToolButtonBackgroundView: UIView {
-    var cornerRadius: CGFloat = 5 {
-        didSet {
-            if cornerRadius != oldValue {
-                setNeedsDisplay()
-            }
-        }
-    }
     var fillColor: UIColor? {
         didSet {
             if fillColor != oldValue {
@@ -15,18 +8,20 @@ final class KeyboardToolButtonBackgroundView: UIView {
             }
         }
     }
-    var shadowColor: UIColor? = .black.withAlphaComponent(0.2) {
-        didSet {
-            if shadowColor != oldValue {
-                setNeedsDisplay()
-            }
+
+    private var cornerRadius: CGFloat {
+        if #available(iOS 26, *) {
+            9
+        } else {
+            5
         }
     }
-    var shadowLength: CGFloat = 1 {
-        didSet {
-            if shadowLength != oldValue {
-                setNeedsDisplay()
-            }
+    private let shadowColor: UIColor = .black.withAlphaComponent(0.2)
+    private var shadowLength: CGFloat {
+        if #available(iOS 26, *) {
+            0
+        } else {
+            1
         }
     }
 
@@ -46,7 +41,7 @@ final class KeyboardToolButtonBackgroundView: UIView {
         if let fillColor = fillColor {
             let fillRect = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height - shadowLength)
             let fillPath = CGPath(roundedRect: fillRect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
-            if let shadowColor = shadowColor, shadowLength != 0 {
+            if shadowLength != 0 {
                 var transform = CGAffineTransform(translationX: 0, y: shadowLength)
                 if let shadowPath = fillPath.copy(using: &transform) {
                     context?.saveGState()

@@ -28,76 +28,113 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     }
 #endif
 
-    private let keyboardContentLayoutGuide = UILayoutGuide()
-    private var keyboardContentLayoutGuideLeadingConstraint: NSLayoutConstraint?
-    private var keyboardContentLayoutGuideTrailingConstraint: NSLayoutConstraint?
-    private let backgroundView: UIView = {
-        let this = UIView()
-        this.translatesAutoresizingMaskIntoConstraints = false
-        return this
+    @available(iOS 26, *)
+    private var glassBackgroundView: UIVisualEffectView {
+        if let glassBackgroundView = _glassBackgroundView {
+            return glassBackgroundView
+        } else {
+            let effect = UIGlassEffect(style: .regular)
+            let glassBackgroundView = UIVisualEffectView(effect: effect)
+            _glassBackgroundView = glassBackgroundView
+            return glassBackgroundView
+        }
+    }
+    private let glassBackgroundMaskView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 13
+        view.layer.cornerCurve = .continuous
+        view.backgroundColor = .black
+        return view
     }()
     private let stackView: UIStackView = {
-        let this = UIStackView()
-        this.translatesAutoresizingMaskIntoConstraints = false
-        this.axis = .horizontal
-        this.alignment = .center
-        this.distribution = .equalSpacing
-        return this
+        let view = UIStackView()
+        view.axis = .horizontal
+        view.alignment = .center
+        view.distribution = .equalSpacing
+        return view
     }()
+
+    private var _glassBackgroundView: UIVisualEffectView?
 
     /// Initializes a new toolbar to be shown above a keyboard.
     public init() {
-        let frame = CGRect(x: 0, y: 0, width: 0, height: 46)
-        super.init(frame: frame, inputViewStyle: .keyboard)
-        setupView()
-        setupLayout()
+        var height: CGFloat = 46
+        if #available(iOS 26, *) {
+            height += 20 // Accomodates for bottom distance to keyboard and spacing above and below stack view
+        }
+        let frame = CGRect(x: 0, y: 0, width: 0, height: height)
+        let inputViewStyle: UIInputView.Style = if #available(iOS 16, *) {
+            .default
+        } else {
+            .keyboard
+        }
+        super.init(frame: frame, inputViewStyle: inputViewStyle)
+        backgroundColor = .clear
+        if #available(iOS 26, *) {
+            glassBackgroundView.mask = glassBackgroundMaskView
+            addSubview(glassBackgroundView)
+            addSubview(stackView)
+            updateGlassBackgroundColor()
+        } else {
+            addSubview(stackView)
+        }
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupView() {
-        backgroundColor = .clear
-        addLayoutGuide(keyboardContentLayoutGuide)
-        addSubview(backgroundView)
-        addSubview(stackView)
-    }
-
-    private func setupLayout() {
-        keyboardContentLayoutGuideLeadingConstraint = keyboardContentLayoutGuide.leadingAnchor.constraint(equalTo: leadingAnchor)
-        keyboardContentLayoutGuideTrailingConstraint = keyboardContentLayoutGuide.trailingAnchor.constraint(equalTo: trailingAnchor)
-        NSLayoutConstraint.activate([
-            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            backgroundView.topAnchor.constraint(equalTo: topAnchor),
-            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-            keyboardContentLayoutGuideLeadingConstraint!,
-            keyboardContentLayoutGuideTrailingConstraint!,
-            keyboardContentLayoutGuide.topAnchor.constraint(equalTo: topAnchor),
-            keyboardContentLayoutGuide.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-            stackView.leadingAnchor.constraint(equalTo: keyboardContentLayoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: keyboardContentLayoutGuide.trailingAnchor),
-            stackView.topAnchor.constraint(equalTo: keyboardContentLayoutGuide.topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: keyboardContentLayoutGuide.bottomAnchor)
-        ])
-    }
-
-    public override func updateConstraints() {
-        super.updateConstraints()
-        keyboardContentLayoutGuideLeadingConstraint?.constant = InputToolMargin.rawValue
-        keyboardContentLayoutGuideTrailingConstraint?.constant = InputToolMargin.rawValue * -1
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        let sideMargin = InputToolMargin.rawValue(for: traitCollection)
+        if #available(iOS 26, *) {
+            let bottomMargin: CGFloat = 10
+            let stackViewMargin: CGFloat = 7
+            let glassMaskMargin = max(max(sideMargin - stackViewMargin, 0), 5)
+            glassBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
+            glassBackgroundMaskView.frame = CGRect(
+                x: glassMaskMargin,
+                y: 0,
+                width: bounds.width - glassMaskMargin * 2,
+                height: bounds.height - bottomMargin
+            )
+            stackView.frame = CGRect(
+                x: (glassMaskMargin + stackViewMargin),
+                y: 0,
+                width: bounds.width - (glassMaskMargin + stackViewMargin) * 2,
+                height: bounds.height - bottomMargin
+            )
+        } else {
+            stackView.frame = CGRect(
+                x: sideMargin,
+                y: 0,
+                width: bounds.width - sideMargin * 2,
+                height: bounds.height
+            )
+        }
     }
 
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        setNeedsUpdateConstraints()
+        setNeedsLayout()
+        if #available(iOS 26, *) {
+            updateGlassBackgroundColor()
+        }
     }
 }
 
 private extension KeyboardToolbarView {
+    @available(iOS 26, *)
+    private func updateGlassBackgroundColor() {
+        let effect = UIGlassEffect(style: .regular)
+        if traitCollection.userInterfaceStyle == .dark {
+            effect.tintColor = .black.withAlphaComponent(0.95)
+        } else {
+            effect.tintColor = .black.withAlphaComponent(0.02)
+        }
+        glassBackgroundView.effect = effect
+    }
+
     private func reloadButtons() {
         for view in stackView.arrangedSubviews {
             stackView.removeArrangedSubview(view)

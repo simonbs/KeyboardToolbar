@@ -21,7 +21,6 @@ final class DrawingKeyboardToolPickerBackgroundView: UIView {
     }
 
     private let shadowColor: UIColor = .black.withAlphaComponent(0.2)
-    private let handleShadowLength: CGFloat = 1
     private let strokeColor: UIColor = .separator
 
     init() {
@@ -82,11 +81,11 @@ final class DrawingKeyboardToolPickerBackgroundView: UIView {
     }
 
     private func drawHandleShadow(to context: CGContext) {
-        guard handleShadowLength > 0 else {
+        guard pathConfig.handleShadowLength > 0 else {
             return
         }
         let handlePath = UIBezierPath(roundedRect: pathConfig.handleRect, cornerRadius: pathConfig.handleRadius)
-        let handleShadowRect = pathConfig.handleRect.offsetBy(dx: 0, dy: handleShadowLength)
+        let handleShadowRect = pathConfig.handleRect.offsetBy(dx: 0, dy: pathConfig.handleShadowLength)
         let handleShadowPath = UIBezierPath(roundedRect: handleShadowRect, cornerRadius: pathConfig.handleRadius)
         context.saveGState()
         // Draw the shadow
