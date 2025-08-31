@@ -28,18 +28,8 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     }
 #endif
 
-    @available(iOS 26, *)
-    private var glassBackgroundView: UIVisualEffectView {
-        if let glassBackgroundView = _glassBackgroundView {
-            return glassBackgroundView
-        } else {
-            let effect = UIGlassEffect(style: .regular)
-            let glassBackgroundView = UIVisualEffectView(effect: effect)
-            _glassBackgroundView = glassBackgroundView
-            return glassBackgroundView
-        }
-    }
-    private let glassBackgroundMaskView: UIView = {
+    private let visualEffectBackgroundView = UIVisualEffectView()
+    private let visualEffectBackgroundMaskView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 13
         view.layer.cornerCurve = .continuous
@@ -54,8 +44,6 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         return view
     }()
 
-    private var _glassBackgroundView: UIVisualEffectView?
-
     /// Initializes a new toolbar to be shown above a keyboard.
     public init() {
         var height: CGFloat = 46
@@ -66,8 +54,8 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         super.init(frame: frame, inputViewStyle: .keyboard)
         backgroundColor = .clear
         if #available(iOS 26, *) {
-            glassBackgroundView.mask = glassBackgroundMaskView
-            addSubview(glassBackgroundView)
+            visualEffectBackgroundView.mask = visualEffectBackgroundMaskView
+            addSubview(visualEffectBackgroundView)
             addSubview(stackView)
             updateGlassBackgroundColor()
         } else {
@@ -86,8 +74,8 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
             let bottomMargin: CGFloat = 10
             let stackViewMargin: CGFloat = 7
             let glassMaskMargin = max(max(sideMargin - stackViewMargin, 0), 5)
-            glassBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
-            glassBackgroundMaskView.frame = CGRect(
+            visualEffectBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
+            visualEffectBackgroundMaskView.frame = CGRect(
                 x: glassMaskMargin,
                 y: 0,
                 width: bounds.width - glassMaskMargin * 2,
@@ -123,11 +111,11 @@ private extension KeyboardToolbarView {
     private func updateGlassBackgroundColor() {
         let effect = UIGlassEffect(style: .regular)
         if traitCollection.userInterfaceStyle == .dark {
-            effect.tintColor = .black.withAlphaComponent(0.95)
+            effect.tintColor = .black.withAlphaComponent(0.25)
         } else {
-            effect.tintColor = .black.withAlphaComponent(0.02)
+            effect.tintColor = .systemGroupedBackground.withAlphaComponent(0.75)
         }
-        glassBackgroundView.effect = effect
+        visualEffectBackgroundView.effect = effect
     }
 
     private func reloadButtons() {

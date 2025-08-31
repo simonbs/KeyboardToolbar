@@ -84,9 +84,9 @@ final class DrawingKeyboardToolPickerBackgroundView: UIView {
         guard pathConfig.handleShadowLength > 0 else {
             return
         }
-        let handlePath = UIBezierPath(roundedRect: pathConfig.handleRect, cornerRadius: pathConfig.handleRadius)
+        let handlePath = UIBezierPath(roundedRect: pathConfig.handleRect, cornerRadius: pathConfig.handleCornerRadius)
         let handleShadowRect = pathConfig.handleRect.offsetBy(dx: 0, dy: pathConfig.handleShadowLength)
-        let handleShadowPath = UIBezierPath(roundedRect: handleShadowRect, cornerRadius: pathConfig.handleRadius)
+        let handleShadowPath = UIBezierPath(roundedRect: handleShadowRect, cornerRadius: pathConfig.handleCornerRadius)
         context.saveGState()
         // Draw the shadow
         context.addPath(handleShadowPath.cgPath)

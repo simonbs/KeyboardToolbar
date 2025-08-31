@@ -26,13 +26,7 @@ final class KeyboardToolButton: UIButton {
         return view
     }()
     private let toolPickerView = KeyboardToolPickerView()
-    private let toolPickerBackgroundView: KeyboardToolPickerBackgroundView = {
-        let view = KeyboardToolPickerBackgroundView()
-        if #available(iOS 26, *) {
-            view.style = .blurEffect(.systemChromeMaterial)
-        }
-        return view
-    }()
+    private let toolPickerBackgroundView = KeyboardToolPickerBackgroundView()
     private var toolPickerTimer: Timer?
     #if !os(xrOS)
     private let feedbackGenerator = UISelectionFeedbackGenerator()
@@ -77,6 +71,12 @@ final class KeyboardToolButton: UIButton {
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragOutside)
         setupRepresentativeTool()
         updateBackgroundColor()
+        if #available(iOS 26, *) {
+            layer.shadowColor = UIColor.black.cgColor
+            layer.shadowRadius = 5
+            layer.shadowOpacity = 0.1
+            layer.shadowOffset = CGSize(width: 0, height: 2)
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -124,8 +124,14 @@ private extension KeyboardToolButton {
 
     private func updateBackgroundColor() {
         if #available(iOS 26, *) {
-            // iOS 26 does not seem to have more than a single keyboard button appearance.
-            backgroundView.fillColor = .keyboardToolButtonPrimary
+//            // iOS 26 does not seem to have more than a single keyboard button appearance.
+//            backgroundView.fillColor = .keyboardToolButtonPrimary
+            switch item.style {
+            case .primary:
+                backgroundView.fillColor = .keyboardToolButtonPrimary
+            case .secondary:
+                backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .systemFill
+            }
         } else {
             switch item.style {
             case .primary:
@@ -137,9 +143,7 @@ private extension KeyboardToolButton {
     }
 
     @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
-        if #unavailable(iOS 26) {
-            toolPickerBackgroundView.style = .solidColor(toolPickerBackgroundColor)
-        }
+        toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
 #if !os(xrOS)
         UIDevice.current.playInputClick()
 #endif

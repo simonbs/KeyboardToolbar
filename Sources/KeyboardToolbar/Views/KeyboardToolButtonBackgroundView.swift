@@ -9,21 +9,7 @@ final class KeyboardToolButtonBackgroundView: UIView {
         }
     }
 
-    private var cornerRadius: CGFloat {
-        if #available(iOS 26, *) {
-            9
-        } else {
-            5
-        }
-    }
     private let shadowColor: UIColor = .black.withAlphaComponent(0.2)
-    private var shadowLength: CGFloat {
-        if #available(iOS 26, *) {
-            0
-        } else {
-            1
-        }
-    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -38,6 +24,8 @@ final class KeyboardToolButtonBackgroundView: UIView {
         super.draw(rect)
         let context = UIGraphicsGetCurrentContext()
         context?.clear(rect)
+        let shadowLength = KeyboardToolButtonStyle.shadowLength
+        let cornerRadius = KeyboardToolButtonStyle.cornerRadius
         if let fillColor = fillColor {
             let fillRect = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height - shadowLength)
             let fillPath = CGPath(roundedRect: fillRect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)

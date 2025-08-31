@@ -6,8 +6,8 @@ struct KeyboardToolPickerBackgroundPathConfiguration: Equatable {
     let preferredHandleXPosition: CGFloat
     let shadowBlur: CGFloat = 5
     let handleShadowLength = KeyboardToolButtonStyle.shadowLength
-    let plateRadius: CGFloat = 10
-    let handleRadius = KeyboardToolButtonStyle.cornerRadius
+    let plateCornerRadius: CGFloat = 10
+    let handleCornerRadius = KeyboardToolButtonStyle.cornerRadius
 
     init(bounds: CGRect, handleSize: CGSize, preferredHandleXPosition: CGFloat) {
         self.bounds = bounds
@@ -40,32 +40,32 @@ extension CGPath {
         let pHandleTopLeftCorner = CGPoint(x: config.handleRect.minX, y: config.handleRect.minY)
 
         let path = CGMutablePath()
-        path.move(to: CGPoint(x: config.insetBounds.minX, y: config.insetBounds.minY + config.plateRadius))
+        path.move(to: CGPoint(x: config.insetBounds.minX, y: config.insetBounds.minY + config.plateCornerRadius))
 
-        path.addArc(corner: pPlateTopLeftCorner, radius: config.plateRadius, circleComponent: .topLeft)
-        path.addArc(corner: pPlateTopRightCorner, radius: config.plateRadius, circleComponent: .topRight)
+        path.addArc(corner: pPlateTopLeftCorner, radius: config.plateCornerRadius, circleComponent: .topLeft)
+        path.addArc(corner: pPlateTopRightCorner, radius: config.plateCornerRadius, circleComponent: .topRight)
 
         // Choose drawing technique depending on the distance between the handle's right-hand side and the plate's right-hand side.
         if config.insetBounds.width - config.handleRect.maxX <= drawingTechniqueBufferDistance {
-            path.addLine(to: pPlateBottomRightCorner.offsetting(y: -config.plateRadius))
-            path.addCurve(to: pHandleTopRightCorner.offsetting(y: config.plateRadius), control1: pPlateBottomRightCorner, control2: pHandleTopRightCorner)
+            path.addLine(to: pPlateBottomRightCorner.offsetting(y: -config.plateCornerRadius))
+            path.addCurve(to: pHandleTopRightCorner.offsetting(y: config.plateCornerRadius), control1: pPlateBottomRightCorner, control2: pHandleTopRightCorner)
         } else {
-            path.addArc(corner: pPlateBottomRightCorner, radius: config.plateRadius, circleComponent: .bottomRight)
-            path.addLine(to: pHandleTopRightCorner.offsetting(x: config.plateRadius))
-            path.addQuadCurve(to: pHandleTopRightCorner.offsetting(y: config.plateRadius), control: pHandleTopRightCorner)
+            path.addArc(corner: pPlateBottomRightCorner, radius: config.plateCornerRadius, circleComponent: .bottomRight)
+            path.addLine(to: pHandleTopRightCorner.offsetting(x: config.plateCornerRadius))
+            path.addQuadCurve(to: pHandleTopRightCorner.offsetting(y: config.plateCornerRadius), control: pHandleTopRightCorner)
         }
 
-        path.addArc(corner: pHandleBottomRightCorner, radius: config.handleRadius, circleComponent: .bottomRight)
-        path.addArc(corner: pHandleBottomLeftCorner, radius: config.handleRadius, circleComponent: .bottomLeft)
+        path.addArc(corner: pHandleBottomRightCorner, radius: config.handleCornerRadius, circleComponent: .bottomRight)
+        path.addArc(corner: pHandleBottomLeftCorner, radius: config.handleCornerRadius, circleComponent: .bottomLeft)
 
         // Choose drawing technique depending on the distance between the handle's left-hand side and the plate's left-hand side.
         if config.handleRect.minX <= drawingTechniqueBufferDistance {
-            path.addLine(to: pHandleTopLeftCorner.offsetting(y: config.plateRadius))
-            path.addCurve(to: pPlateBottomLeftCorner.offsetting(y: -config.plateRadius), control1: pHandleTopLeftCorner, control2: pPlateBottomLeftCorner)
+            path.addLine(to: pHandleTopLeftCorner.offsetting(y: config.plateCornerRadius))
+            path.addCurve(to: pPlateBottomLeftCorner.offsetting(y: -config.plateCornerRadius), control1: pHandleTopLeftCorner, control2: pPlateBottomLeftCorner)
         } else {
-            path.addLine(to: pHandleTopLeftCorner.offsetting(y: config.plateRadius))
-            path.addQuadCurve(to: pHandleTopLeftCorner.offsetting(x: -config.plateRadius), control: pHandleTopLeftCorner)
-            path.addArc(corner: pPlateBottomLeftCorner, radius: config.plateRadius, circleComponent: .bottomLeft)
+            path.addLine(to: pHandleTopLeftCorner.offsetting(y: config.plateCornerRadius))
+            path.addQuadCurve(to: pHandleTopLeftCorner.offsetting(x: -config.plateCornerRadius), control: pHandleTopLeftCorner)
+            path.addArc(corner: pPlateBottomLeftCorner, radius: config.plateCornerRadius, circleComponent: .bottomLeft)
         }
 
         path.closeSubpath()

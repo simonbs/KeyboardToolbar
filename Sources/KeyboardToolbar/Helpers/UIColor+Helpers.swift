@@ -2,14 +2,10 @@ import UIKit
 
 extension UIColor {
     static var keyboardToolButtonPrimary: UIColor {
-        if #available(iOS 26, *) {
-            inModule(colorName: "keyboard_tool_button_primary")
-        } else {
-            inModule(colorName: "keyboard_tool_button_primary_pre_ios26")
-        }
+        inModule(colorName: "keyboard_tool_button_primary")
     }
     static var keyboardToolButtonSecondary: UIColor {
-        inModule(colorName: "keyboard_tool_button_secondary_pre_ios26")
+        inModule(colorName: "keyboard_tool_button_secondary")
     }
     static var keyboardToolPickerForegroundHighlighted: UIColor {
         inModule(colorName: "keyboard_tool_picker_foreground_highlighted")

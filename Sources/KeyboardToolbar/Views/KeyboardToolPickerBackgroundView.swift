@@ -1,11 +1,6 @@
 import UIKit
 
 final class KeyboardToolPickerBackgroundView: UIView {
-    enum Style: Equatable {
-        case solidColor(UIColor)
-        case blurEffect(UIBlurEffect.Style)
-    }
-
     var handleSize = CGSize(width: 30, height: 30) {
         didSet {
             if handleSize != oldValue {
@@ -20,24 +15,12 @@ final class KeyboardToolPickerBackgroundView: UIView {
             }
         }
     }
-    var style: Style = .solidColor(.white) {
-        didSet {
-            if style != oldValue {
-                switch style {
-                case .solidColor(let color):
-                    visualEffectBackgroundView.removeFromSuperview()
-                    drawingBackgroundView.fillColor = color
-                    if drawingBackgroundView.superview == nil {
-                        addSubview(drawingBackgroundView)
-                    }
-                case .blurEffect(let style):
-                    drawingBackgroundView.removeFromSuperview()
-                    visualEffectBackgroundView.effect = UIBlurEffect(style: style)
-                    if visualEffectBackgroundView.superview == nil {
-                        addSubview(visualEffectBackgroundView)
-                    }
-                }
-            }
+    var fillColor: UIColor {
+        get {
+            drawingBackgroundView.fillColor
+        }
+        set {
+            drawingBackgroundView.fillColor = newValue
         }
     }
     override var frame: CGRect {
@@ -57,12 +40,11 @@ final class KeyboardToolPickerBackgroundView: UIView {
     }
 
     private let drawingBackgroundView = DrawingKeyboardToolPickerBackgroundView()
-    private let visualEffectBackgroundView = UIVisualEffectView()
-    private let visualEffectBackgroundMaskLayer = CAShapeLayer()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
+        addSubview(drawingBackgroundView)
     }
 
     required init?(coder: NSCoder) {
@@ -71,16 +53,8 @@ final class KeyboardToolPickerBackgroundView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        switch style {
-        case .solidColor:
-            drawingBackgroundView.pathConfig = pathConfig
-            drawingBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
-        case .blurEffect:
-            visualEffectBackgroundMaskLayer.path = CGPath.keyboardToolPickerBackground(with: pathConfig)
-            visualEffectBackgroundMaskLayer.frame = CGRect(origin: .zero, size: bounds.size)
-            visualEffectBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
-            visualEffectBackgroundView.layer.mask = visualEffectBackgroundMaskLayer
-        }
+        drawingBackgroundView.pathConfig = pathConfig
+        drawingBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
     }
 
     func preferredSize(containingContentWidth contentWidth: CGFloat) -> CGSize {
