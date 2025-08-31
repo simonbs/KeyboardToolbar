@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "BlurUIKit",
+        "repositoryURL": "git@github.com:TimOliver/BlurUIKit.git",
+        "state": {
+          "branch": null,
+          "revision": "7808a740b1424e4a105c6c9df0aff2f3de7ac7a4",
+          "version": "1.2.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,3 +1,4 @@
+import BlurUIKit
 import UIKit
 
 /// Toolbar to be displayed above the keyboard.
@@ -28,14 +29,19 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     }
 #endif
 
-    private let visualEffectBackgroundView = UIVisualEffectView()
-    private let visualEffectBackgroundMaskView: UIView = {
-        let view = UIView()
-        view.layer.cornerRadius = 13
-        view.layer.cornerCurve = .continuous
-        view.backgroundColor = .black
-        return view
-    }()
+    @available(iOS 26, *)
+    private var blurView: VariableBlurView {
+        if let blurView = _blurView {
+            return blurView
+        } else {
+            let blurView = VariableBlurView()
+            blurView.direction = .up
+            blurView.dimmingTintColor = .black.withAlphaComponent(0.1)
+            _blurView = blurView
+            return blurView
+        }
+    }
+    private var _blurView: VariableBlurView?
     private let stackView: UIStackView = {
         let view = UIStackView()
         view.axis = .horizontal
@@ -54,10 +60,8 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         super.init(frame: frame, inputViewStyle: .keyboard)
         backgroundColor = .clear
         if #available(iOS 26, *) {
-            visualEffectBackgroundView.mask = visualEffectBackgroundMaskView
-            addSubview(visualEffectBackgroundView)
+            addSubview(blurView)
             addSubview(stackView)
-            updateGlassBackgroundColor()
         } else {
             addSubview(stackView)
         }
@@ -71,53 +75,23 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
         super.layoutSubviews()
         let sideMargin = InputToolMargin.rawValue(for: traitCollection)
         if #available(iOS 26, *) {
-            let bottomMargin: CGFloat = 10
-            let stackViewMargin: CGFloat = 7
-            let glassMaskMargin = max(max(sideMargin - stackViewMargin, 0), 5)
-            visualEffectBackgroundView.frame = CGRect(origin: .zero, size: bounds.size)
-            visualEffectBackgroundMaskView.frame = CGRect(
-                x: glassMaskMargin,
-                y: 0,
-                width: bounds.width - glassMaskMargin * 2,
-                height: bounds.height - bottomMargin
-            )
-            stackView.frame = CGRect(
-                x: (glassMaskMargin + stackViewMargin),
-                y: 0,
-                width: bounds.width - (glassMaskMargin + stackViewMargin) * 2,
-                height: bounds.height - bottomMargin
-            )
-        } else {
-            stackView.frame = CGRect(
-                x: sideMargin,
-                y: 0,
-                width: bounds.width - sideMargin * 2,
-                height: bounds.height
-            )
+            blurView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height + 20) // Expand beyond rounded corners
         }
+        stackView.frame = CGRect(
+            x: sideMargin,
+            y: 0,
+            width: bounds.width - sideMargin * 2,
+            height: bounds.height
+        )
     }
 
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         setNeedsLayout()
-        if #available(iOS 26, *) {
-            updateGlassBackgroundColor()
-        }
     }
 }
 
 private extension KeyboardToolbarView {
-    @available(iOS 26, *)
-    private func updateGlassBackgroundColor() {
-        let effect = UIGlassEffect(style: .regular)
-        if traitCollection.userInterfaceStyle == .dark {
-            effect.tintColor = .black.withAlphaComponent(0.25)
-        } else {
-            effect.tintColor = .systemGroupedBackground.withAlphaComponent(0.75)
-        }
-        visualEffectBackgroundView.effect = effect
-    }
-
     private func reloadButtons() {
         for view in stackView.arrangedSubviews {
             stackView.removeArrangedSubview(view)
