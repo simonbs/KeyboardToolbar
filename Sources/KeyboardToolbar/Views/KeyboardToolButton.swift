@@ -29,7 +29,7 @@ final class KeyboardToolButton: UIButton {
     private let toolPickerBackgroundView: KeyboardToolPickerBackgroundView = {
         let view = KeyboardToolPickerBackgroundView()
         if #available(iOS 26, *) {
-            view.isBlurBackgroundEnabled = true
+            view.style = .blurEffect(.systemChromeMaterial)
         }
         return view
     }()
@@ -137,7 +137,9 @@ private extension KeyboardToolButton {
     }
 
     @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
-        toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
+        if #unavailable(iOS 26) {
+            toolPickerBackgroundView.style = .solidColor(toolPickerBackgroundColor)
+        }
 #if !os(xrOS)
         UIDevice.current.playInputClick()
 #endif
