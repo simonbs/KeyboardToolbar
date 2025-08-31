@@ -7,7 +7,7 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     /// Tool groups to be displayed in the toolbar.
     public var groups: [KeyboardToolGroup] = [] {
         didSet {
-            reloadBarButtonItems()
+            reloadButtons()
         }
     }
     /// Duration a user should long press an item to present the tool picker.
@@ -30,18 +30,23 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     private let keyboardContentLayoutGuide = UILayoutGuide()
     private var keyboardContentLayoutGuideLeadingConstraint: NSLayoutConstraint?
     private var keyboardContentLayoutGuideTrailingConstraint: NSLayoutConstraint?
-    private let toolbar: UIToolbar = {
-        let this = UIToolbar()
+    private let backgroundView: UIView = {
+        let this = UIView()
         this.translatesAutoresizingMaskIntoConstraints = false
-        this.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
-        this.setShadowImage(UIImage(), forToolbarPosition: .any)
+        this.backgroundColor = .red
         return this
     }()
+    private let stackView: UIStackView = {
+        let this = UIStackView()
+        this.translatesAutoresizingMaskIntoConstraints = false
+        this.axis = .horizontal
+        this.alignment = .center
+        this.distribution = .equalSpacing
+        return this
+    }()
+
     private var toolButtons: [KeyboardToolButton] {
-        let items = toolbar.items ?? []
-        return items.compactMap { barButtonItem in
-            return barButtonItem.customView as? KeyboardToolButton
-        }
+        return collectToolButtons(from: stackView)
     }
 
     /// Initializes a new toolbar to be shown above a keyboard.
@@ -59,22 +64,28 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
     private func setupView() {
         backgroundColor = .clear
         addLayoutGuide(keyboardContentLayoutGuide)
-        addSubview(toolbar)
+        addSubview(backgroundView)
+        addSubview(stackView)
     }
 
     private func setupLayout() {
         keyboardContentLayoutGuideLeadingConstraint = keyboardContentLayoutGuide.leadingAnchor.constraint(equalTo: leadingAnchor)
         keyboardContentLayoutGuideTrailingConstraint = keyboardContentLayoutGuide.trailingAnchor.constraint(equalTo: trailingAnchor)
         NSLayoutConstraint.activate([
+            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+
             keyboardContentLayoutGuideLeadingConstraint!,
             keyboardContentLayoutGuideTrailingConstraint!,
             keyboardContentLayoutGuide.topAnchor.constraint(equalTo: topAnchor),
             keyboardContentLayoutGuide.bottomAnchor.constraint(equalTo: bottomAnchor),
 
-            toolbar.leadingAnchor.constraint(equalTo: keyboardContentLayoutGuide.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: keyboardContentLayoutGuide.trailingAnchor),
-            toolbar.topAnchor.constraint(equalTo: keyboardContentLayoutGuide.topAnchor),
-            toolbar.bottomAnchor.constraint(equalTo: keyboardContentLayoutGuide.bottomAnchor)
+            stackView.leadingAnchor.constraint(equalTo: keyboardContentLayoutGuide.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: keyboardContentLayoutGuide.trailingAnchor),
+            stackView.topAnchor.constraint(equalTo: keyboardContentLayoutGuide.topAnchor),
+            stackView.bottomAnchor.constraint(equalTo: keyboardContentLayoutGuide.bottomAnchor)
         ])
     }
 
@@ -91,24 +102,37 @@ public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
 }
 
 private extension KeyboardToolbarView {
-    private func reloadBarButtonItems() {
-        let toolbarEdgePadding: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16
-        var barButtonItems: [UIBarButtonItem] = [.fixedSpace(-toolbarEdgePadding)]
-        for (idx, group) in groups.enumerated() {
-            for (idx, item) in group.items.enumerated() {
+    private func reloadButtons() {
+        for view in stackView.arrangedSubviews {
+            stackView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        for group in groups {
+            let groupStack = UIStackView()
+            groupStack.axis = .horizontal
+            groupStack.alignment = .center
+            groupStack.distribution = .fill
+            groupStack.spacing = group.spacing
+            for item in group.items {
                 let button = KeyboardToolButton(item: item)
                 button.translatesAutoresizingMaskIntoConstraints = false
                 button.showToolPickerDelay = showToolPickerDelay
-                barButtonItems += [UIBarButtonItem(customView: button)]
-                if group.spacing != 0 && idx < group.items.count - 1 {
-                    barButtonItems += [.fixedSpace(group.spacing)]
-                }
+                groupStack.addArrangedSubview(button)
             }
-            if idx < groups.count - 1 {
-                barButtonItems += [.flexibleSpace()]
-            }
+            stackView.addArrangedSubview(groupStack)
         }
-        barButtonItems += [.fixedSpace(-toolbarEdgePadding)]
-        toolbar.items = barButtonItems
+    }
+}
+
+private extension KeyboardToolbarView {
+    func collectToolButtons(from view: UIView) -> [KeyboardToolButton] {
+        var results: [KeyboardToolButton] = []
+        if let button = view as? KeyboardToolButton {
+            results.append(button)
+        }
+        for subview in view.subviews {
+            results.append(contentsOf: collectToolButtons(from: subview))
+        }
+        return results
     }
 }
