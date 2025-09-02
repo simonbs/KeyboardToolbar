@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "KeyboardToolbar", targets: ["KeyboardToolbar"]),
     ],
     dependencies: [
-        .package(url: "git@github.com:TimOliver/BlurUIKit.git", from: "1.1.1")
+        .package(url: "https://github.com/TimOliver/BlurUIKit.git", from: "1.1.1")
     ],
     targets: [
         .target(
