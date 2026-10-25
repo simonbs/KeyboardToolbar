@@ -8,14 +8,18 @@ import UIKit
 public struct BlockKeyboardTool: KeyboardTool {
     /// Specifies how the tool should be displayed in the toolbar.
     public let displayRepresentation: KeyboardToolDisplayRepresentation
+    /// A custom spoken name for the tool.
+    public let accessibilityLabel: String?
     /// The block to be called when the tool is selected.
     public let actionHandler: () -> Void
 
     /// Initializes a keyboard tool.
     /// - Parameters:
     ///   - displayRepresentation: Specifies how the tool should be displayed in the toolbar.
+    ///   - accessibilityLabel: A custom spoken name. Defaults to a name derived from the display representation.
     ///   - actionHandler: The block to be called when the tool is selected.
-    public init(displayRepresentation: KeyboardToolDisplayRepresentation, action actionHandler: @escaping () -> Void) {
+    public init(displayRepresentation: KeyboardToolDisplayRepresentation, accessibilityLabel: String? = nil, action actionHandler: @escaping () -> Void) {
+        self.accessibilityLabel = accessibilityLabel
         self.displayRepresentation = displayRepresentation
         self.actionHandler = actionHandler
     }
@@ -24,30 +28,33 @@ public struct BlockKeyboardTool: KeyboardTool {
     /// - Parameters:
     ///   - text: The string to use when displaying the tool.
     ///   - offset: Offset to be applied to the text when shown in a button. Defaults to (0, 0).
+    ///   - accessibilityLabel: A custom spoken name. Defaults to a name derived from the display representation.
     ///   - actionHandler: The block to be called when the tool is selected.
-    public init(text: String, offset: CGPoint = .zero, action actionHandler: @escaping () -> Void) {
+    public init(text: String, offset: CGPoint = .zero, accessibilityLabel: String? = nil, action actionHandler: @escaping () -> Void) {
         let displayRepresentation: KeyboardToolDisplayRepresentation = .text(text, offset: offset)
-        self.init(displayRepresentation: displayRepresentation, action: actionHandler)
+        self.init(displayRepresentation: displayRepresentation, accessibilityLabel: accessibilityLabel, action: actionHandler)
     }
 
     /// Initializes a tool that displays an image.
     /// - Parameters:
     ///   - smallImage: The image to use when displaying the tool.
     ///   - largeImage: The image to use when momentarily displaying the tool picker.
+    ///   - accessibilityLabel: A custom spoken name. Defaults to a name derived from the display representation.
     ///   - actionHandler: The block to be called when the tool is selected.
-    public init(smallImage: UIImage, largeImage: UIImage, action actionHandler: @escaping () -> Void) {
+    public init(smallImage: UIImage, largeImage: UIImage, accessibilityLabel: String? = nil, action actionHandler: @escaping () -> Void) {
         let displayRepresentation: KeyboardToolDisplayRepresentation = .image(small: smallImage, large: largeImage)
-        self.init(displayRepresentation: displayRepresentation, action: actionHandler)
+        self.init(displayRepresentation: displayRepresentation, accessibilityLabel: accessibilityLabel, action: actionHandler)
     }
 
     /// Initializes a tool that displays a SF Symbol.
     /// - Parameters:
     ///   - symbolName: The name of the symbol to use when displaying the tool.
     ///   - pointSize: The point size of the symbol. Defaults to 14.
+    ///   - accessibilityLabel: A custom spoken name. Defaults to a name derived from the display representation.
     ///   - actionHandler: The block to be called when the tool is selected.
-    public init(symbolName: String, pointSize: CGFloat = 14, action actionHandler: @escaping () -> Void) {
+    public init(symbolName: String, pointSize: CGFloat = 14, accessibilityLabel: String? = nil, action actionHandler: @escaping () -> Void) {
         let displayRepresentation: KeyboardToolDisplayRepresentation = .symbol(named: symbolName, pointSize: pointSize)
-        self.init(displayRepresentation: displayRepresentation, action: actionHandler)
+        self.init(displayRepresentation: displayRepresentation, accessibilityLabel: accessibilityLabel, action: actionHandler)
     }
 
     /// Called when selecting the tool in the toolbar.

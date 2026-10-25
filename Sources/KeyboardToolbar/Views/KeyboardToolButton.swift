@@ -1,12 +1,14 @@
 import UIKit
 
 final class KeyboardToolButton: UIButton {
-    private enum ToolPickerDirection {
-        case left
-        case right
-    }
-
     var showToolPickerDelay: TimeInterval = 0.5
+    var willPresentToolPicker: (() -> Void)?
+
+    override var isEnabled: Bool {
+        didSet {
+            if !isEnabled { cancelInteraction() }
+        }
+    }
 
     override var intrinsicContentSize: CGSize {
         let imageWidth = imageView?.image?.size.width ?? 0
@@ -31,7 +33,13 @@ final class KeyboardToolButton: UIButton {
     #if !os(xrOS)
     private let feedbackGenerator = UISelectionFeedbackGenerator()
     #endif
-    private let item: KeyboardToolGroupItem
+    private var item: KeyboardToolGroupItem
+    private var trackingPress = false
+    private var selectedIndex: Int?
+    private var touchX: CGFloat = 0
+    private var expandedTouchX: CGFloat?
+    private var selectionTravel: CGFloat = 1
+    private var presentedAnchor: CGRect?
     private var imagePadding: CGFloat = 5
     private var backgroundInsets: UIEdgeInsets = .zero {
         didSet {
@@ -66,17 +74,13 @@ final class KeyboardToolButton: UIButton {
         addTarget(self, action: #selector(touchDown(_:event:)), for: .touchDown)
         addTarget(self, action: #selector(touchUp), for: .touchUpInside)
         addTarget(self, action: #selector(touchUp), for: .touchUpOutside)
-        addTarget(self, action: #selector(touchUp), for: .touchCancel)
+        addTarget(self, action: #selector(cancelInteraction), for: .touchCancel)
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragInside)
         addTarget(self, action: #selector(touchDragged(_:event:)), for: .touchDragOutside)
-        setupRepresentativeTool()
-        updateBackgroundColor()
-        if #available(iOS 26, *) {
-            layer.shadowColor = UIColor.black.cgColor
-            layer.shadowRadius = 5
-            layer.shadowOpacity = 0.1
-            layer.shadowOffset = CGSize(width: 0, height: 2)
-        }
+        NotificationCenter.default.addObserver(self, selector: #selector(cancelInteraction),
+                                               name: UIApplication.willResignActiveNotification, object: nil)
+        update(item: item)
+
     }
 
     required init?(coder: NSCoder) {
@@ -85,11 +89,96 @@ final class KeyboardToolButton: UIButton {
 
     override func didMoveToSuperview() {
         super.didMoveToSuperview()
+        if superview == nil { cancelInteraction() }
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil { cancelInteraction() }
+    }
+
+    func update(item: KeyboardToolGroupItem) {
+        let oldTools = self.item.allTools
+        let newTools = item.allTools
+        let sameChoices = oldTools.count == newTools.count && zip(oldTools, newTools).allSatisfy {
+            $0.displayRepresentation.matches($1.displayRepresentation)
+        }
+        if !item.isEnabled || !sameChoices || self.item.style != item.style ||
+            self.item.contentEdgeInsets != item.contentEdgeInsets ||
+            !self.item.representativeTool.displayRepresentation.matches(item.representativeTool.displayRepresentation) {
+            cancelInteraction()
+        }
+        self.item = item
         isEnabled = item.isEnabled
+        if #available(iOS 15, *) {
+            configuration?.contentInsets = item.contentEdgeInsets
+        } else {
+            contentEdgeInsets = UIEdgeInsets(item.contentEdgeInsets)
+        }
+        setupRepresentativeTool()
+        updateBackgroundColor()
+        accessibilityLabel = item.accessibilityLabel ?? item.representativeTool.accessibilityLabel
+            ?? item.representativeTool.displayRepresentation.spokenName
+        accessibilityIdentifier = item.accessibilityIdentifier
+            ?? "keyboard-toolbar-" + item.representativeTool.displayRepresentation.identifier
+        accessibilityHint = newTools.isEmpty ? nil : "Touch and hold, then slide to choose a tool."
+        accessibilityCustomActions = newTools.enumerated().map { index, tool in
+            UIAccessibilityCustomAction(name: tool.accessibilityLabel ?? tool.displayRepresentation.spokenName) { [weak self] _ in
+                guard let self, self.isEnabled, self.item.allTools.indices.contains(index) else { return false }
+                self.cancelInteraction()
+                self.item.allTools[index].performAction()
+                return true
+            }
+        }
+        invalidateIntrinsicContentSize()
+    }
+
+    func trackTouch(at location: CGPoint) {
+        touchX = location.x
+        guard trackingPress, let expandedTouchX, toolPickerView.toolCount > 1 else { return }
+        let direction: CGFloat = toolPickerView.showReversed ? -1 : 1
+        let progress = max(0, min(1, direction * (touchX - expandedTouchX) / selectionTravel))
+        let index = Int((progress * CGFloat(toolPickerView.toolCount - 1)).rounded())
+        if index != selectedIndex {
+            selectedIndex = index
+            // Use the picker's hit-testing path so it also clears the previous tool's highlight.
+            let visualIndex = toolPickerView.showReversed ? toolPickerView.toolCount - index - 1 : index
+            let x = toolPickerView.leadingSpacing + toolPickerView.toolSize.width / 2
+                + CGFloat(visualIndex) * (toolPickerView.toolSize.width + toolPickerView.toolSpacing)
+            toolPickerView.highlightTool(closestTo: CGPoint(x: x, y: toolPickerView.bounds.midY))
+            #if !os(xrOS)
+            feedbackGenerator.selectionChanged()
+            #endif
+        }
+    }
+
+    override func accessibilityActivate() -> Bool {
+        guard isEnabled else { return false }
+        cancelInteraction()
+        item.representativeTool.performAction()
+        return true
+    }
+
+    /// Interrupted touches and editor detachment must never commit a tool.
+    @objc func cancelInteraction() {
+        trackingPress = false
+        selectedIndex = nil
+        expandedTouchX = nil
+        presentedAnchor = nil
+        isHighlighted = false
+        setContentHidden(false)
+        cancelToolPickerTimer()
+        backgroundView.isHidden = false
+        toolPickerView.clearHighlightedTool()
+        toolPickerView.removeFromSuperview()
+        toolPickerBackgroundView.removeFromSuperview()
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        if let presentedAnchor, let window, convert(bounds, to: window) != presentedAnchor {
+            cancelInteraction()
+        }
         sendSubviewToBack(backgroundView)
         let backgroundWidth = bounds.width - backgroundInsets.left - backgroundInsets.right
         let backgroundHeight = bounds.height - backgroundInsets.top - backgroundInsets.bottom
@@ -106,6 +195,8 @@ final class KeyboardToolButton: UIButton {
 
 private extension KeyboardToolButton {
     private func setupRepresentativeTool() {
+        setTitle(nil, for: .normal)
+        setImage(nil, for: .normal)
         switch item.representativeTool.displayRepresentation {
         case .text(let configuration):
             titleLabel?.font = configuration.font(ofSize: .small)
@@ -123,71 +214,60 @@ private extension KeyboardToolButton {
     }
 
     private func updateBackgroundColor() {
-        if #available(iOS 26, *) {
-//            // iOS 26 does not seem to have more than a single keyboard button appearance.
-//            backgroundView.fillColor = .keyboardToolButtonPrimary
-            switch item.style {
-            case .primary:
-                backgroundView.fillColor = .keyboardToolButtonPrimary
-            case .secondary:
-                backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .systemFill
-            }
-        } else {
-            switch item.style {
-            case .primary:
-                backgroundView.fillColor = .keyboardToolButtonPrimary
-            case .secondary:
-                backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .keyboardToolButtonSecondary
-            }
+        switch item.style {
+        case .primary:
+            backgroundView.fillColor = .keyboardToolButtonPrimary
+        case .secondary:
+            backgroundView.fillColor = isHighlighted ? .keyboardToolButtonPrimary : .keyboardToolButtonSecondary
         }
     }
 
-    @objc private func touchDown(_ sender: UIButton, event: UIEvent) {
+    @objc private func touchDown(_ sender: UIButton, event: UIEvent?) {
+        cancelInteraction()
+        guard isEnabled, window != nil else { return }
+        trackingPress = true
+        isHighlighted = true
+        touchX = event?.touches(for: self)?.first?.location(in: self).x ?? bounds.midX
         toolPickerBackgroundView.fillColor = toolPickerBackgroundColor
-#if !os(xrOS)
+        #if !os(xrOS)
         UIDevice.current.playInputClick()
-#endif
-        cancelToolPickerTimer()
-        let shouldPresentPicker = item.style == .primary || !item.allTools.isEmpty
-        guard shouldPresentPicker else {
-            return
-        }
+        #endif
+        guard item.style == .primary || !item.allTools.isEmpty else { return }
+        willPresentToolPicker?()
+        guard trackingPress, isEnabled, window != nil else { return }
         setContentHidden(true)
         #if !os(xrOS)
         feedbackGenerator.prepare()
         #endif
+        presentToolPicker(with: [item.representativeTool], atSize: .large)
+        guard !item.allTools.isEmpty else { return }
         if showToolPickerDelay > 0 {
-            presentToolPicker(with: [item.representativeTool], atSize: .large)
-            if !item.allTools.isEmpty {
-                schedulePresentingAllTools()
-            }
+            schedulePresentingAllTools()
         } else {
-            presentToolPicker(with: item.allTools, atSize: .large)
+            toolPickerTimerTriggered()
         }
     }
 
     @objc private func touchUp() {
-        setContentHidden(false)
-        cancelToolPickerTimer()
-        backgroundView.isHidden = false
-        toolPickerView.removeFromSuperview()
-        toolPickerBackgroundView.removeFromSuperview()
-        if let highlightedIndex = toolPickerView.highlightedIndex {
-            let tool = item.allTools[highlightedIndex]
-            tool.performAction()
-        } else {
-            item.representativeTool.performAction()
+        guard trackingPress, isEnabled, window != nil else {
+            cancelInteraction()
+            return
         }
+        let tool = selectedIndex.flatMap { item.allTools.indices.contains($0) ? item.allTools[$0] : nil }
+            ?? item.representativeTool
+        cancelInteraction()
+        tool.performAction()
     }
 
     @objc private func touchDragged(_ sender: UIButton, event: UIEvent) {
-        updateHiglightedTool(for: event)
+        guard trackingPress, let touch = event.touches(for: self)?.first ?? event.allTouches?.first else { return }
+        trackTouch(at: touch.location(in: self))
     }
 
     private func schedulePresentingAllTools() {
-        let delay = showToolPickerDelay
-        let selector = #selector(toolPickerTimerTriggered)
-        let timer = Timer(timeInterval: delay, target: self, selector: selector, userInfo: nil, repeats: false)
+        let timer = Timer(timeInterval: showToolPickerDelay, repeats: false) { [weak self] _ in
+            self?.toolPickerTimerTriggered()
+        }
         toolPickerTimer = timer
         RunLoop.main.add(timer, forMode: .common)
     }
@@ -198,14 +278,32 @@ private extension KeyboardToolButton {
     }
 
     @objc private func toolPickerTimerTriggered() {
+        cancelToolPickerTimer()
+        guard trackingPress, isEnabled, let window, !item.allTools.isEmpty else { return }
+        selectedIndex = 0
+        expandedTouchX = touchX
+        presentToolPicker(with: item.allTools, atSize: .small)
+        toolPickerView.highlightTool(at: 0)
+        // Anchor at the finger at expansion. Fitting the popup to the screen must
+        // not move selection, and every option must be reachable without leaving it.
+        let fingerX = convert(CGPoint(x: touchX, y: bounds.midY), to: window).x
+        let finalVisualIndex = toolPickerView.showReversed ? 0 : toolPickerView.toolCount - 1
+        let finalX = toolPickerView.leadingSpacing + toolPickerView.toolSize.width / 2
+            + CGFloat(finalVisualIndex) * (toolPickerView.toolSize.width + toolPickerView.toolSpacing)
+        let farthestX = toolPickerView.convert(CGPoint(x: finalX, y: 0), to: window).x
+        let direction: CGFloat = toolPickerView.showReversed ? -1 : 1
+        let availableTravel = direction < 0
+            ? fingerX - window.bounds.minX - max(8, window.safeAreaInsets.left)
+            : window.bounds.maxX - max(8, window.safeAreaInsets.right) - fingerX
+        selectionTravel = max(1, min(max(1, direction * (farthestX - fingerX)), availableTravel))
         #if !os(xrOS)
         feedbackGenerator.selectionChanged()
         #endif
-        cancelToolPickerTimer()
-        presentToolPicker(with: item.allTools, atSize: .small)
     }
 
     private func presentToolPicker(with tools: [KeyboardTool], atSize contentSize: KeyboardToolContentSize) {
+        guard let window, !tools.isEmpty else { return }
+        presentedAnchor = convert(bounds, to: window)
         if toolPickerBackgroundView.superview == nil {
             addSubview(toolPickerBackgroundView)
         }
@@ -221,26 +319,12 @@ private extension KeyboardToolButton {
         let toolPickerLayout = toolPickerLayout(forShowingNumberOfTools: tools.count)
         toolPickerView.showReversed = toolPickerLayout.isReverse
         toolPickerView.frame = toolPickerLayout.pickerFrame
+        toolPickerView.layoutIfNeeded()
         toolPickerBackgroundView.preferredHandleXPosition = toolPickerLayout.handleXPosition
         toolPickerBackgroundView.frame = toolPickerLayout.backgroundFrame
         backgroundView.isHidden = true
         if tools.count > 1 {
             toolPickerView.highlightTool(at: 0)
-        } else {
-            toolPickerView.clearHighlightedTool()
-        }
-    }
-
-    private func updateHiglightedTool(for event: UIEvent) {
-        if toolPickerView.toolCount > 1, let touch = event.allTouches?.first {
-            let location = touch.location(in: toolPickerView)
-            let oldHighlightedIndex = toolPickerView.highlightedIndex
-            toolPickerView.highlightTool(closestTo: location)
-            if toolPickerView.highlightedIndex != oldHighlightedIndex {
-#if !os(xrOS)
-                feedbackGenerator.selectionChanged()
-#endif
-            }
         } else {
             toolPickerView.clearHighlightedTool()
         }
@@ -261,6 +345,7 @@ private extension KeyboardToolButton {
             )
         }
     }
+
 }
 
 private extension UIEdgeInsets {

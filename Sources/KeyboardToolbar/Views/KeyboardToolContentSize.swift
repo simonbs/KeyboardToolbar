@@ -31,10 +31,10 @@ extension KeyboardToolDisplayRepresentation.SymbolConfiguration {
     func image(ofSize size: KeyboardToolContentSize) -> UIImage? {
         switch size {
         case .small:
-            let configuration = UIImage.SymbolConfiguration(pointSize: 14)
+            let configuration = UIImage.SymbolConfiguration(pointSize: pointSize)
             return UIImage(systemName: symbolName, withConfiguration: configuration)
         case .large:
-            let configuration = UIImage.SymbolConfiguration(pointSize: 21)
+            let configuration = UIImage.SymbolConfiguration(pointSize: pointSize * 1.5)
             return UIImage(systemName: symbolName, withConfiguration: configuration)
         }
     }

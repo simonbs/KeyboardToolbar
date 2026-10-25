@@ -1,18 +1,7 @@
 import CoreGraphics
 
+/// Metrics for the classic keyboard-key appearance.
 enum KeyboardToolButtonStyle {
-    static var cornerRadius: CGFloat {
-        if #available(iOS 26, *) {
-            9
-        } else {
-            5
-        }
-    }
-    static var shadowLength: CGFloat {
-        if #available(iOS 26, *) {
-            0
-        } else {
-            1
-        }
-    }
+    static let cornerRadius: CGFloat = 5
+    static let shadowLength: CGFloat = 1
 }

@@ -29,6 +29,11 @@ public struct KeyboardToolGroupItem {
     /// The items to be displayed in the tool picker that is presented when long pressing the item.
     public let tools: [KeyboardTool]
 
+    /// Overrides the representative tool's spoken name for the toolbar button.
+    public let accessibilityLabel: String?
+    /// A stable identifier for accessibility automation.
+    public let accessibilityIdentifier: String?
+
     var allTools: [KeyboardTool] {
         if includeRepresentativeToolInPicker {
             return [representativeTool] + tools
@@ -44,13 +49,19 @@ public struct KeyboardToolGroupItem {
     ///   - contentEdgeInsets: Insets applied to a button showing this item.
     ///   - isEnabled: Whether this item is enabled or not.
     ///   - includeRepresentativeToolInPicker: Whether to include the representative tool in the tool picker that is presented when long pressing the item.
+    ///   - accessibilityLabel: Overrides the representative tool's spoken name.
+    ///   - accessibilityIdentifier: A stable identifier for accessibility automation.
     ///   - tools: The items to be displayed in the tool picker that is presented when long pressing the item.
     public init(style: Style = .primary,
                 representativeTool: KeyboardTool,
                 contentEdgeInsets: NSDirectionalEdgeInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 1, trailing: 0),
                 isEnabled: Bool = true,
                 includeRepresentativeToolInPicker: Bool = false,
-                tools: [KeyboardTool] = []) {
+                tools: [KeyboardTool] = [],
+                accessibilityLabel: String? = nil,
+                accessibilityIdentifier: String? = nil) {
+        self.accessibilityLabel = accessibilityLabel
+        self.accessibilityIdentifier = accessibilityIdentifier
         self.style = style
         self.representativeTool = representativeTool
         self.contentEdgeInsets = contentEdgeInsets
