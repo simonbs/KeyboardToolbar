@@ -1,128 +1,144 @@
-import BlurUIKit
 import UIKit
 
 /// Toolbar to be displayed above the keyboard.
 ///
-/// Set an instance of this view as the `inputAccessoryView` on a text view or text field to display tools above the keyboard.
+/// Assign to a text input's `inputAccessoryView`. On iOS 26 and later, groups use
+/// native Liquid Glass capsules. Earlier iOS versions and visionOS keep the classic key appearance.
 public final class KeyboardToolbarView: UIInputView, UIInputViewAudioFeedback {
-    /// Tool groups to be displayed in the toolbar.
+    /// Tool groups displayed in order. Empty groups are ignored.
     public var groups: [KeyboardToolGroup] = [] {
-        didSet {
-            reloadButtons()
-        }
+        didSet { reloadButtons() }
     }
-    /// Duration a user should long press an item to present the tool picker.
+    /// Duration before a held item expands its alternatives. Zero expands immediately.
     public var showToolPickerDelay: TimeInterval = 0.5 {
         didSet {
-            if showToolPickerDelay != oldValue {
-                let toolButtons = collectToolButtons(from: stackView)
-                for button in toolButtons {
-                    button.showToolPickerDelay = showToolPickerDelay
-                }
-            }
+            legacyButtons.flatMap { $0 }.forEach { $0.showToolPickerDelay = showToolPickerDelay }
+            #if os(iOS)
+            glassView?.showToolPickerDelay = showToolPickerDelay
+            #endif
         }
     }
-#if !os(xrOS)
-    /// Enables clicks when selecting a tool.
-    public var enableInputClicksWhenVisible: Bool {
-        return true
-    }
-#endif
+    /// Called before a tool picker appears, for example to dismiss an editor's completions.
+    public var willPresentToolPicker: (() -> Void)?
 
-    @available(iOS 26, *)
-    private var blurView: VariableBlurView {
-        if let blurView = _blurView {
-            return blurView
-        } else {
-            let blurView = VariableBlurView()
-            blurView.direction = .up
-            blurView.dimmingTintColor = .black.withAlphaComponent(0.1)
-            _blurView = blurView
-            return blurView
-        }
-    }
-    private var _blurView: VariableBlurView?
-    private let stackView: UIStackView = {
-        let view = UIStackView()
-        view.axis = .horizontal
-        view.alignment = .center
-        view.distribution = .equalSpacing
-        return view
-    }()
+    #if !os(visionOS)
+    public var enableInputClicksWhenVisible: Bool { true }
+    #endif
 
-    /// Initializes a new toolbar to be shown above a keyboard.
+    private let stackView = UIStackView()
+    private var legacyButtons: [[KeyboardToolButton]] = []
+    private var previousSize: CGSize = .zero
+    #if os(iOS)
+    private var glassView: GlassKeyboardToolbarView?
+    #endif
+
+    /// Initializes a keyboard accessory with the appropriate system appearance.
     public init() {
-        var height: CGFloat = 46
-        if #available(iOS 26, *) {
-            height += 20 // Accomodates for bottom distance to keyboard and spacing above and below stack view
-        }
-        let frame = CGRect(x: 0, y: 0, width: 0, height: height)
-        super.init(frame: frame, inputViewStyle: .keyboard)
+        var usesGlass = false
+        #if os(iOS)
+        if #available(iOS 26, *) { usesGlass = true }
+        #endif
+        super.init(frame: CGRect(x: 0, y: 0, width: 0, height: usesGlass ? 60 : 46),
+                   inputViewStyle: usesGlass ? .default : .keyboard)
         backgroundColor = .clear
-        if #available(iOS 26, *) {
-            addSubview(blurView)
-            addSubview(stackView)
+        autoresizingMask = .flexibleWidth
+        #if os(iOS)
+        if usesGlass {
+            let glassView = GlassKeyboardToolbarView()
+            glassView.willPresentToolPicker = { [weak self] in self?.willPresentToolPicker?() }
+            self.glassView = glassView
+            addSubview(glassView)
         } else {
-            addSubview(stackView)
+            configureLegacyStack()
+        }
+        #else
+        configureLegacyStack()
+        #endif
+        for name in [UIResponder.keyboardWillHideNotification, UIResponder.keyboardWillChangeFrameNotification,
+                     UIApplication.willResignActiveNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(cancelInteractions), name: name, object: nil)
         }
     }
 
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     public override func layoutSubviews() {
         super.layoutSubviews()
-        let sideMargin = InputToolMargin.rawValue(for: traitCollection)
-        if #available(iOS 26, *) {
-            blurView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height + 20) // Expand beyond rounded corners
+        if previousSize != bounds.size {
+            cancelInteractions()
+            previousSize = bounds.size
         }
-        stackView.frame = CGRect(
-            x: sideMargin,
-            y: 0,
-            width: bounds.width - sideMargin * 2,
-            height: bounds.height
-        )
+        #if os(iOS)
+        if let glassView {
+            glassView.frame = bounds
+            return
+        }
+        #endif
+        let margin = InputToolMargin.rawValue(for: traitCollection)
+        stackView.frame = bounds.insetBy(dx: margin, dy: 0)
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil { cancelInteractions() }
     }
 
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         setNeedsLayout()
     }
-}
 
-private extension KeyboardToolbarView {
-    private func reloadButtons() {
-        for view in stackView.arrangedSubviews {
-            stackView.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        for group in groups {
-            let groupStack = UIStackView()
-            groupStack.axis = .horizontal
-            groupStack.alignment = .center
-            groupStack.distribution = .fill
-            groupStack.spacing = group.spacing
-            for item in group.items {
-                let button = KeyboardToolButton(item: item)
-                button.translatesAutoresizingMaskIntoConstraints = false
-                button.showToolPickerDelay = showToolPickerDelay
-                groupStack.addArrangedSubview(button)
-            }
-            stackView.addArrangedSubview(groupStack)
-        }
+    /// Discards pending presses without performing an action and closes any picker.
+    @objc public func cancelInteractions() {
+        legacyButtons.flatMap { $0 }.forEach { $0.cancelInteraction() }
+        #if os(iOS)
+        glassView?.cancelInteractions()
+        #endif
     }
-}
 
-private extension KeyboardToolbarView {
-    func collectToolButtons(from view: UIView) -> [KeyboardToolButton] {
-        var results: [KeyboardToolButton] = []
-        if let button = view as? KeyboardToolButton {
-            results.append(button)
+    private func configureLegacyStack() {
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.distribution = .equalSpacing
+        addSubview(stackView)
+    }
+
+    private func reloadButtons() {
+        let groups = groups.filter { !$0.items.isEmpty }
+        #if os(iOS)
+        if let glassView {
+            glassView.groups = groups
+            return
         }
-        for subview in view.subviews {
-            results.append(contentsOf: collectToolButtons(from: subview))
+        #endif
+        if legacyButtons.map(\.count) == groups.map({ $0.items.count }) {
+            for (index, group) in groups.enumerated() {
+                (stackView.arrangedSubviews[index] as? UIStackView)?.spacing = group.spacing
+                for (button, item) in zip(legacyButtons[index], group.items) { button.update(item: item) }
+            }
+        } else {
+            cancelInteractions()
+            stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            legacyButtons = groups.map { group in
+                let groupStack = UIStackView()
+                groupStack.axis = .horizontal
+                groupStack.alignment = .center
+                groupStack.spacing = group.spacing
+                let buttons = group.items.map { item in
+                    let button = KeyboardToolButton(item: item)
+                    button.translatesAutoresizingMaskIntoConstraints = false
+                    button.showToolPickerDelay = showToolPickerDelay
+                    button.willPresentToolPicker = { [weak self, weak button] in
+                        self?.legacyButtons.flatMap { $0 }.filter { $0 !== button }.forEach { $0.cancelInteraction() }
+                        self?.willPresentToolPicker?()
+                    }
+                    groupStack.addArrangedSubview(button)
+                    return button
+                }
+                stackView.addArrangedSubview(groupStack)
+                return buttons
+            }
         }
-        return results
+        setNeedsLayout()
     }
 }

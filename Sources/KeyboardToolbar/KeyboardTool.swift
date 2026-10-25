@@ -10,6 +10,12 @@ import Foundation
 public protocol KeyboardTool {
     /// Specifies how the tool should be displayed in the toolbar.
     var displayRepresentation: KeyboardToolDisplayRepresentation { get }
+    /// A custom spoken name. When nil, a name is derived from the display representation.
+    var accessibilityLabel: String? { get }
     /// The function to be called when the tool is selected.
     func performAction()
+}
+
+public extension KeyboardTool {
+    var accessibilityLabel: String? { nil }
 }

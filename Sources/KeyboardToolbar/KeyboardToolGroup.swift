@@ -7,7 +7,8 @@ import Foundation
 public struct KeyboardToolGroup {
     /// The spacing between items in the group.
     ///
-    /// The default value is 6.
+    /// The default value is 6. Narrow Liquid Glass layouts compress this spacing
+    /// when combining groups into one capsule to preserve usable key widths.
     public let spacing: CGFloat
     /// The items to be displayed in the group.
     public let items: [KeyboardToolGroupItem]

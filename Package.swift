@@ -9,18 +9,13 @@ let package = Package(
     products: [
         .library(name: "KeyboardToolbar", targets: ["KeyboardToolbar"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/TimOliver/BlurUIKit.git", from: "1.1.1")
-    ],
     targets: [
         .target(
             name: "KeyboardToolbar",
-            dependencies: [
-                .product(name: "BlurUIKit", package: "BlurUIKit"),
-            ],
             resources: [
                 .process("Assets.xcassets")
             ]
-        )
+        ),
+        .testTarget(name: "KeyboardToolbarTests", dependencies: ["KeyboardToolbar"])
     ]
 )

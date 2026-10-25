@@ -1,7 +1,7 @@
 # KeyboardToolbar
 
-![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard.png#gh-light-mode-only)
-![](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard~dark.png#gh-dark-mode-only)
+![Liquid Glass keyboard toolbar with expanded bracket choices in light mode.](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard.png#gh-light-mode-only)
+![Liquid Glass keyboard toolbar with expanded bracket choices in dark mode.](Sources/KeyboardToolbar/Documentation.docc/Resources/keyboard~dark.png#gh-dark-mode-only)
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsimonbs%2FKeyboardToolbar%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/simonbs/KeyboardToolbar)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsimonbs%2FKeyboardToolbar%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/simonbs/KeyboardToolbar)
@@ -13,6 +13,24 @@ Use KeyboardToolbar to add tools as an input accessory view to a UITextField, UI
 
 KeyboardToolbar creates buttons with an iOS-like appearance and behavior.
 
+### Appearance and interaction
+
+On iOS 26 and later, the toolbar uses native Liquid Glass capsules. Each tool group gets its own capsule when there is enough room; narrower layouts combine the groups into a single capsule and compress group spacing to keep tools accessible. Expanded choices also use Liquid Glass and stay within the screen edges. Earlier iOS versions and visionOS retain the original keyboard-style buttons and picker.
+
+Liquid Glass gives all enabled tools the same foreground emphasis. The legacy `Style.secondary` appearance is deprecated on iOS 26 and ignored by the glass renderer; disabled tools still appear dimmed.
+
+Tap a tool to perform its primary action. Touch and hold to expand its choices, slide to select another choice, and release to perform it. Sliding stays anchored to your finger even when the picker moves to fit the screen. VoiceOver users can select alternatives using accessibility actions.
+
+The hold delay defaults to 0.5 seconds and can be customized:
+
+```swift
+keyboardToolbarView.showToolPickerDelay = 0.2
+```
+
+Use `willPresentToolPicker` to dismiss overlapping UI, such as an editor's completions, before choices appear. Tools can provide `accessibilityLabel` for a custom spoken name; `BlockKeyboardTool` accepts the same optional argument in its initializers.
+
+The screenshots above show the Liquid Glass appearance available on iOS 26 and later. Its system material adapts to light and dark mode.
+
 ## 📖 Documentation
 
 The public interface is documented in the Swift files and can be found in [KeyboardToolbar/Sources/KeyboardToolbar](https://github.com/simonbs/KeyboardToolbar/tree/main/Sources/KeyboardToolbar). You can also [read the documention on Swift Package Index](https://swiftpackageindex.com/simonbs/KeyboardToolbar).
@@ -23,10 +41,14 @@ Lastly, you can also build the documentation yourself by opening the Swift packa
 
 KeyboardToolbar is distributed using the [Swift Package Manager](https://www.swift.org/package-manager/). Install it in a project by adding it as a dependency in your Package.swift manifest or through “Package Dependencies” in project settings.
 
+Building requires Xcode 26 or later with the iOS 26 SDK. The package supports deployment to iOS 14 and later and visionOS.
+
+Liquid Glass support is available in the [1.0.0-beta.1 prerelease](https://github.com/simonbs/KeyboardToolbar/releases/tag/1.0.0-beta.1). Pin the exact beta version while evaluating it. The latest stable release, 0.1.1, retains the classic appearance.
+
 ```swift
 let package = Package(
     dependencies: [
-        .package(url: "git@github.com:simonbs/KeyboardToolbar.git", from: "0.1.0")
+        .package(url: "https://github.com/simonbs/KeyboardToolbar.git", exact: "1.0.0-beta.1")
     ]
 )
 ```
@@ -52,11 +74,11 @@ let canRedo = textView.undoManager?.canRedo ?? false
 keyboardToolbarView.groups = [
     // Tools for undoing and redoing text in the text view.
     KeyboardToolGroup(items: [
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
             self?.textView.undoManager?.undo()
             self?.setupKeyboardTools()
         }, isEnabled: canUndo),
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
             self?.textView.undoManager?.redo()
             self?.setupKeyboardTools()
         }, isEnabled: canRedo)
@@ -101,11 +123,11 @@ keyboardToolbarView.groups = [
     ]),
     KeyboardToolGroup(items: [
         // Tool to present the find navigator.
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
             self?.textView.findInteraction?.presentFindNavigator(showingReplace: false)
         }),
         // Tool to dismiss the keyboard.
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
             self?.textView.resignFirstResponder()
         })
     ])

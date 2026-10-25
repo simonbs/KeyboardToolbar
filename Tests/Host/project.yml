@@ -1,0 +1,45 @@
+name: KeyboardToolbarTests
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  KeyboardToolbar:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  ToolbarTestHost:
+    type: application
+    platform: iOS
+    sources:
+      - ../../Example/Example
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dk.simonbs.KeyboardToolbar.TestHost
+        INFOPLIST_FILE: ../../Example/Example/Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: KeyboardToolbar
+  KeyboardToolbarTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ../KeyboardToolbarTests
+      - ../KeyboardToolbarHostedTests
+    dependencies:
+      - target: ToolbarTestHost
+      - package: KeyboardToolbar
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: dk.simonbs.KeyboardToolbar.Tests
+schemes:
+  KeyboardToolbarTests:
+    build:
+      targets:
+        ToolbarTestHost: all
+    test:
+      targets:
+        - KeyboardToolbarTests
