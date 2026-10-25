@@ -17,6 +17,8 @@ KeyboardToolbar creates buttons with an iOS-like appearance and behavior.
 
 On iOS 26 and later, the toolbar uses native Liquid Glass capsules. Each tool group gets its own capsule when there is enough room; narrower layouts combine the groups into a single capsule and compress group spacing to keep tools accessible. Expanded choices also use Liquid Glass and stay within the screen edges. Earlier iOS versions and visionOS retain the original keyboard-style buttons and picker.
 
+Liquid Glass gives all enabled tools the same foreground emphasis. The legacy `Style.secondary` appearance is deprecated on iOS 26 and ignored by the glass renderer; disabled tools still appear dimmed.
+
 Tap a tool to perform its primary action. Touch and hold to expand its choices, slide to select another choice, and release to perform it. Sliding stays anchored to your finger even when the picker moves to fit the screen. VoiceOver users can select alternatives using accessibility actions.
 
 The hold delay defaults to 0.5 seconds and can be customized:
@@ -72,11 +74,11 @@ let canRedo = textView.undoManager?.canRedo ?? false
 keyboardToolbarView.groups = [
     // Tools for undoing and redoing text in the text view.
     KeyboardToolGroup(items: [
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
             self?.textView.undoManager?.undo()
             self?.setupKeyboardTools()
         }, isEnabled: canUndo),
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
             self?.textView.undoManager?.redo()
             self?.setupKeyboardTools()
         }, isEnabled: canRedo)
@@ -121,11 +123,11 @@ keyboardToolbarView.groups = [
     ]),
     KeyboardToolGroup(items: [
         // Tool to present the find navigator.
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
             self?.textView.findInteraction?.presentFindNavigator(showingReplace: false)
         }),
         // Tool to dismiss the keyboard.
-        KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
+        KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
             self?.textView.resignFirstResponder()
         })
     ])

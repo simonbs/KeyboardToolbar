@@ -70,9 +70,9 @@ final class GlassKeyboardToolButton: UIButton {
             setTitle(nil, for: .normal)
         }
         setImage(representation.image(), for: .normal)
-        let foreground: UIColor = item.style == .secondary ? .secondaryLabel : .label
-        setTitleColor(foreground, for: .normal)
-        tintColor = foreground
+        // Liquid Glass gives every enabled tool the same foreground emphasis.
+        setTitleColor(.label, for: .normal)
+        tintColor = .label
         accessibilityLabel = item.accessibilityLabel ?? item.representativeTool.accessibilityLabel ?? representation.spokenName
         accessibilityIdentifier = item.accessibilityIdentifier ?? "keyboard-toolbar-" + representation.identifier
         accessibilityHint = tools.isEmpty ? nil : "Touch and hold, then slide to choose a tool."

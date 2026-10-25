@@ -32,11 +32,11 @@ private extension MainViewController {
         let canRedo = textView.undoManager?.canRedo ?? false
         keyboardToolbarView.groups = [
             KeyboardToolGroup(items: [
-                KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
+                KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.backward") { [weak self] in
                     self?.textView.undoManager?.undo()
                     self?.setupKeyboardTools()
                 }, isEnabled: canUndo),
-                KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
+                KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "arrow.uturn.forward") { [weak self] in
                     self?.textView.undoManager?.redo()
                     self?.setupKeyboardTools()
                 }, isEnabled: canRedo)
@@ -79,10 +79,10 @@ private extension MainViewController {
                 ])
             ]),
             KeyboardToolGroup(items: [
-                KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
+                KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "magnifyingglass") { [weak self] in
                     self?.textView.findInteraction?.presentFindNavigator(showingReplace: false)
                 }),
-                KeyboardToolGroupItem(style: .secondary, representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
+                KeyboardToolGroupItem(representativeTool: BlockKeyboardTool(symbolName: "keyboard.chevron.compact.down") { [weak self] in
                     self?.textView.resignFirstResponder()
                 })
             ])

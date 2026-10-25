@@ -8,13 +8,15 @@ public struct KeyboardToolGroupItem {
         ///
         /// Typically used for items that presents the tool picker when long pressed.
         case primary
-        /// A faded style.
+        /// A faded style for the classic keyboard appearance.
         ///
         /// Typically used for items that does not present the tool picker when long pressed.
+        /// Ignored by Liquid Glass on iOS 26 and later; enabled tools use uniform emphasis.
+        @available(iOS, deprecated: 26.0, message: "Liquid Glass ignores secondary styling. Use the default primary style.")
         case secondary
     }
 
-    /// The style of the item.
+    /// The classic appearance style. Ignored by Liquid Glass on iOS 26 and later.
     public let style: Style
     /// The tool representing the item.
     ///

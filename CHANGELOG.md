@@ -3,6 +3,7 @@
 ## 1.0.0 — Unreleased
 
 - Native Liquid Glass group capsules on iOS 26 and later, with a single capsule fallback when space is limited. Earlier iOS and visionOS retain the classic keyboard-key appearance.
+- Deprecate secondary styling on iOS 26: Liquid Glass uses uniform emphasis for enabled tools and only dims disabled tools.
 - Remove BlurUIKit; there is no custom toolbar background blur.
 - Preserve the existing tool models, group spacing, item insets, text offsets, image variants, and symbol sizing. Narrow glass layouts compress group spacing to keep keys usable.
 - Keep the default hold delay at 0.5 seconds through `showToolPickerDelay`; zero expands choices immediately.
