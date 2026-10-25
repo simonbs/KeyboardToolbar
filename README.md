@@ -43,12 +43,12 @@ KeyboardToolbar is distributed using the [Swift Package Manager](https://www.swi
 
 Building requires Xcode 26 or later with the iOS 26 SDK. The package supports deployment to iOS 14 and later and visionOS.
 
-Liquid Glass support is being prepared for 1.0 and is not included in the published 0.1.0 release shown below. To try the changes before 1.0 is released, use a reviewed commit from this repository with SwiftPM's `revision:` requirement. Switch to a version requirement after the release is available.
+Liquid Glass support is available in the [1.0.0-beta.1 prerelease](https://github.com/simonbs/KeyboardToolbar/releases/tag/1.0.0-beta.1). Pin the exact beta version while evaluating it. The latest stable release, 0.1.1, retains the classic appearance.
 
 ```swift
 let package = Package(
     dependencies: [
-        .package(url: "git@github.com:simonbs/KeyboardToolbar.git", from: "0.1.0")
+        .package(url: "https://github.com/simonbs/KeyboardToolbar.git", exact: "1.0.0-beta.1")
     ]
 )
 ```
