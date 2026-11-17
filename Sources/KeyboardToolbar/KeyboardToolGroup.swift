@@ -14,7 +14,8 @@ public struct KeyboardToolGroup {
     public let items: [KeyboardToolGroupItem]
     /// Lets the group page horizontally when its full-size keys cannot fit in the Liquid Glass toolbar.
     public let allowsHorizontalScrolling: Bool
-    /// The preferred number of keys per page in the Liquid Glass toolbar. Narrower layouts may fit fewer keys.
+    /// The preferred number of keys per page when a Liquid Glass group overflows.
+    /// A narrow layout may fit fewer keys. A wide layout shows every key across the available space.
     public let preferredItemsPerPage: Int?
 
     /// Initializes a tool group.

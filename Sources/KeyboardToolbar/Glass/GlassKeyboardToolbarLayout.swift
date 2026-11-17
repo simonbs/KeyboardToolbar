@@ -49,10 +49,15 @@ struct GlassKeyboardToolbarLayout {
             let keysPerPage = min(preferred, groupCounts[index])
             return (index, CGFloat(keysPerPage) * fullKeyWidth + CGFloat(keysPerPage - 1) * spacings[index])
         }) : [:]
+        let fullToolbarWidth = CGFloat(count) * fullKeyWidth + groupOverhead
+            + scrollable.reduce(CGFloat.zero) { $0 + spacingWidths[$1] }
+        let showsAllKeys = !preferredWidths.isEmpty && availableWidth >= fullToolbarWidth
+        let preferredKeyCount = preferredWidths.keys.reduce(0) { $0 + groupCounts[$1] }
+        let extraWidthPerKey = showsAllKeys ? (availableWidth - fullToolbarWidth) / CGFloat(preferredKeyCount) : 0
         let ordinarySlots = slots - CGFloat(preferredWidths.count)
         let naturalButtonWidth = min(fullKeyWidth, max(1, (availableWidth - overhead) / slots))
         let buttonWidth: CGFloat
-        if !preferredWidths.isEmpty, ordinarySlots > 0 {
+        if !showsAllKeys, !preferredWidths.isEmpty, ordinarySlots > 0 {
             // Give preferred pages room to fit whole keys while preserving each fixed button's minimum width.
             let remaining = availableWidth - overhead - preferredWidths.values.reduce(0, +)
             buttonWidth = min(naturalButtonWidth, max(minimumKeyWidth, remaining / ordinarySlots))
@@ -60,11 +65,16 @@ struct GlassKeyboardToolbarLayout {
             buttonWidth = naturalButtonWidth
         }
         let reservedWidth = buttonWidth * slots + overhead
-        let scrollWidths = isGrouped ? Dictionary(uniqueKeysWithValues: scrollable.map { index in
-            (index, preferredWidths[index] ?? (CGFloat(groupCounts[index]) * fullKeyWidth + spacingWidths[index]))
+        let scrollWidths: [Int: CGFloat] = isGrouped ? Dictionary(uniqueKeysWithValues: scrollable.map { index in
+            let naturalWidth = CGFloat(groupCounts[index]) * fullKeyWidth + spacingWidths[index]
+            guard let preferredWidth = preferredWidths[index] else { return (index, naturalWidth) }
+            let wideWidth = naturalWidth + CGFloat(groupCounts[index]) * extraWidthPerKey
+            return (index, showsAllKeys ? wideWidth : preferredWidth)
         }) : [:]
         let availableExtra = max(0, availableWidth - reservedWidth)
-        let preferredExtra = preferredWidths.values.reduce(CGFloat.zero) { $0 + $1 - buttonWidth }
+        let preferredExtra = preferredWidths.keys.reduce(CGFloat.zero) { total, index in
+            total + (scrollWidths[index] ?? buttonWidth) - buttonWidth
+        }
         let usedPreferredExtra = min(preferredExtra, availableExtra)
         let preferredFraction = preferredExtra > 0 ? usedPreferredExtra / preferredExtra : 0
         let ordinaryExtra = scrollWidths.reduce(CGFloat.zero) { total, group in
@@ -86,11 +96,19 @@ struct GlassKeyboardToolbarLayout {
             if isGrouped {
                 let width: CGFloat
                 if let contentWidth = scrollWidths[groupIndex] {
-                    let extraFraction = preferredWidths[groupIndex] != nil ? preferredFraction : ordinaryFraction
+                    let hasPreferredPageSize = preferredWidths[groupIndex] != nil
+                    let extraFraction = hasPreferredPageSize ? preferredFraction : ordinaryFraction
                     width = buttonWidth + (contentWidth - buttonWidth) * extraFraction + 2 * padding
                     let usableWidth = width - 2 * padding
-                    let pagedKeyWidth = min(fullKeyWidth, usableWidth)
-                    let capacity = max(1, Int(((usableWidth + spacing + 0.001) / (pagedKeyWidth + spacing)).rounded(.down)))
+                    let pagedKeyWidth: CGFloat
+                    let capacity: Int
+                    if showsAllKeys && hasPreferredPageSize {
+                        pagedKeyWidth = (usableWidth - spacingWidths[groupIndex]) / CGFloat(groupCount)
+                        capacity = groupCount
+                    } else {
+                        pagedKeyWidth = min(fullKeyWidth, usableWidth)
+                        capacity = max(1, Int(((usableWidth + spacing + 0.001) / (pagedKeyWidth + spacing)).rounded(.down)))
+                    }
                     let pageCount = (groupCount + capacity - 1) / capacity
                     pagedGroups[groupIndex] = Pagination(capacity: capacity, pageCount: pageCount)
                     keys.append((0..<groupCount).map { index in

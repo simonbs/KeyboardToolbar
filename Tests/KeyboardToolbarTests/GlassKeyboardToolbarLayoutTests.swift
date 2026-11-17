@@ -72,7 +72,7 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
     }
 
     func testPreferredPageSizeKeepsFourGroupsAndFitsWholeSymbolKeys() {
-        for (width, capacity) in [(CGFloat(320), 3), (375, 4), (402, 4), (540, 4)] {
+        for (width, capacity) in [(CGFloat(320), 3), (375, 4), (402, 4)] {
             let layout = GlassKeyboardToolbarLayout(
                 bounds: CGRect(x: 0, y: 0, width: width, height: 60), safeAreaInsets: .zero,
                 groupCounts: [2, 6, 1, 1], scrollableGroups: [1], preferredItemsPerPage: [1: 4]
@@ -90,6 +90,34 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
                     if index == 1 { XCTAssertEqual(key.width, 44) }
                     else { XCTAssertGreaterThanOrEqual(key.width, 32) }
                 }
+            }
+        }
+    }
+
+    func testEightSymbolKeysUseTwoPagesInPortraitAndFillWideCapsule() throws {
+        let configurations: [(width: CGFloat, inset: CGFloat, expectedPages: Int)] = [
+            (402, 0, 2), (583, 0, 2), (584, 0, 1), (852, 59, 1)
+        ]
+        for (width, inset, expectedPages) in configurations {
+            let layout = GlassKeyboardToolbarLayout(
+                bounds: CGRect(x: 0, y: 0, width: width, height: 60),
+                safeAreaInsets: UIEdgeInsets(top: 0, left: inset, bottom: 0, right: inset),
+                groupCounts: [2, 8, 1, 1], scrollableGroups: [1], preferredItemsPerPage: [1: 4]
+            )
+            XCTAssertEqual(layout.capsuleFrames.count, 4)
+            XCTAssertEqual(layout.pagination[1]?.pageCount, expectedPages)
+            XCTAssertEqual(layout.pagination[1]?.capacity, expectedPages == 1 ? 8 : 4)
+            let symbols = layout.buttonFrames[1]
+            XCTAssertEqual(symbols.count, 8)
+            XCTAssertTrue(symbols.allSatisfy { $0.width >= 44 })
+            if expectedPages == 1 {
+                let first = try XCTUnwrap(symbols.first)
+                let last = try XCTUnwrap(symbols.last)
+                XCTAssertEqual(first.minX, 2)
+                XCTAssertEqual(last.maxX, layout.capsuleFrames[1].width - 2, accuracy: 0.001)
+                XCTAssertEqual(last.width, first.width)
+                XCTAssertEqual(layout.capsuleFrames[0].minX, inset + 8, accuracy: 0.001)
+                XCTAssertEqual(layout.capsuleFrames[3].maxX, width - inset - 8, accuracy: 0.001)
             }
         }
     }
