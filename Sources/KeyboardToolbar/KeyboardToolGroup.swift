@@ -14,6 +14,8 @@ public struct KeyboardToolGroup {
     public let items: [KeyboardToolGroupItem]
     /// Lets the group page horizontally when its full-size keys cannot fit in the Liquid Glass toolbar.
     public let allowsHorizontalScrolling: Bool
+    /// The preferred number of keys per page in the Liquid Glass toolbar. Narrower layouts may fit fewer keys.
+    public let preferredItemsPerPage: Int?
 
     /// Initializes a tool group.
     /// - Parameters:
@@ -24,9 +26,11 @@ public struct KeyboardToolGroup {
     }
 
     /// Initializes a group that can scroll horizontally on iOS 26 and later.
-    public init(spacing: CGFloat = 6, items: [KeyboardToolGroupItem], allowsHorizontalScrolling: Bool) {
+    public init(spacing: CGFloat = 6, items: [KeyboardToolGroupItem], allowsHorizontalScrolling: Bool,
+                preferredItemsPerPage: Int? = nil) {
         self.spacing = spacing
         self.items = items
         self.allowsHorizontalScrolling = allowsHorizontalScrolling
+        self.preferredItemsPerPage = preferredItemsPerPage
     }
 }

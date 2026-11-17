@@ -50,9 +50,12 @@ final class GlassKeyboardToolbarView: UIView {
         }
         container.frame = bounds
         let scrollableGroups = Set(groups.indices.filter { groups[$0].allowsHorizontalScrolling })
+        let preferredItemsPerPage = Dictionary(uniqueKeysWithValues: groups.enumerated().compactMap { index, group in
+            group.preferredItemsPerPage.map { (index, $0) }
+        })
         let layout = GlassKeyboardToolbarLayout(bounds: bounds, safeAreaInsets: safeAreaInsets,
                                                 groupCounts: buttons.map(\.count), groupSpacings: groups.map(\.spacing),
-                                                scrollableGroups: scrollableGroups)
+                                                scrollableGroups: scrollableGroups, preferredItemsPerPage: preferredItemsPerPage)
         if capsules.count != layout.capsuleFrames.count {
             cancelInteractions()
             capsules.forEach { $0.removeFromSuperview() }

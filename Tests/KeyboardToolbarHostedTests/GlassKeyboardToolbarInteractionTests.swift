@@ -167,7 +167,8 @@ import XCTest
         let symbol = makeItem { inserted.append($0) }
         let groups = [
             KeyboardToolGroup(items: [symbol, symbol]),
-            KeyboardToolGroup(items: Array(repeating: symbol, count: 6), allowsHorizontalScrolling: true),
+            KeyboardToolGroup(items: Array(repeating: symbol, count: 6), allowsHorizontalScrolling: true,
+                              preferredItemsPerPage: 4),
             KeyboardToolGroup(items: [symbol]),
             KeyboardToolGroup(items: [symbol])
         ]
@@ -178,6 +179,7 @@ import XCTest
         toolbar.layoutIfNeeded()
         let scrollView = try XCTUnwrap(firstScrollView(in: toolbar))
         let firstPage = try XCTUnwrap(scrollView.subviews.first { $0.subviews.contains { $0 is GlassKeyboardToolButton } })
+        XCTAssertEqual(firstPage.subviews.filter { $0 is GlassKeyboardToolButton }.count, 4)
         let firstKey = try XCTUnwrap(firstPage.subviews.compactMap { $0 as? GlassKeyboardToolButton }.first)
         XCTAssertTrue(scrollView.isScrollEnabled)
         XCTAssertEqual(scrollView.contentSize.width, scrollView.bounds.width * 2, accuracy: 0.001)

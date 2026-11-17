@@ -71,6 +71,29 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
         }
     }
 
+    func testPreferredPageSizeKeepsFourGroupsAndFitsWholeSymbolKeys() {
+        for (width, capacity) in [(CGFloat(320), 3), (375, 4), (402, 4), (540, 4)] {
+            let layout = GlassKeyboardToolbarLayout(
+                bounds: CGRect(x: 0, y: 0, width: width, height: 60), safeAreaInsets: .zero,
+                groupCounts: [2, 6, 1, 1], scrollableGroups: [1], preferredItemsPerPage: [1: 4]
+            )
+            XCTAssertEqual(layout.capsuleFrames.count, 4)
+            XCTAssertEqual(layout.pagination[1]?.capacity, capacity)
+            XCTAssertEqual(layout.pagination[1]?.pageCount, 2)
+            guard layout.capsuleFrames.count == 4 else { continue }
+            XCTAssertGreaterThanOrEqual(layout.capsuleFrames[0].minX, 8)
+            XCTAssertLessThanOrEqual(layout.capsuleFrames[3].maxX, width - 8 + 0.001)
+            for (index, keys) in layout.buttonFrames.enumerated() {
+                let page = CGRect(origin: .zero, size: layout.capsuleFrames[index].size)
+                for key in keys {
+                    XCTAssertTrue(page.contains(key))
+                    if index == 1 { XCTAssertEqual(key.width, 44) }
+                    else { XCTAssertGreaterThanOrEqual(key.width, 32) }
+                }
+            }
+        }
+    }
+
     func testPickerFitsEdgesAndPreservesDirectionalSelection() {
         for width: CGFloat in [320, 375, 393, 440] {
             let available = CGRect(x: 8, y: 24, width: width - 16, height: 700)
