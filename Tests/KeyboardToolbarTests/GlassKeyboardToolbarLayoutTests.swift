@@ -44,6 +44,34 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
         assertKeysFit(layout, bounds: bounds, minimumKeyWidth: 32)
     }
 
+    func testScrollingSymbolsKeepFullSizeKeysAndLeaveOtherGroupsVisible() {
+        for width: CGFloat in [320, 375, 402, 540] {
+            let bounds = CGRect(x: 0, y: 0, width: width, height: 60)
+            let layout = GlassKeyboardToolbarLayout(bounds: bounds, safeAreaInsets: .zero,
+                                                    groupCounts: [2, 6, 1, 1], groupSpacings: [6, 6, 6, 6],
+                                                    scrollableGroups: [1])
+            XCTAssertTrue(layout.isGrouped)
+            XCTAssertEqual(layout.capsuleFrames.count, 4)
+            XCTAssertEqual(layout.buttonFrames.map(\.count), [2, 6, 1, 1])
+            XCTAssertEqual(Set(layout.scrollContentWidths.keys), [1])
+            XCTAssertTrue(layout.buttonFrames.flatMap { $0 }.allSatisfy { $0.width == 44 })
+            guard let contentWidth = layout.scrollContentWidths[1], layout.capsuleFrames.count == 4 else {
+                continue
+            }
+            XCTAssertEqual(contentWidth, 298)
+            XCTAssertEqual(contentWidth > layout.capsuleFrames[1].width + 0.001, width < 540)
+            for capsule in layout.capsuleFrames {
+                XCTAssertGreaterThanOrEqual(capsule.minX, 8)
+                XCTAssertLessThanOrEqual(capsule.maxX, width - 8 + 0.001)
+            }
+            for index in [0, 2, 3] {
+                for key in layout.buttonFrames[index] {
+                    XCTAssertTrue(CGRect(origin: .zero, size: layout.capsuleFrames[index].size).contains(key))
+                }
+            }
+        }
+    }
+
     func testPickerFitsEdgesAndPreservesDirectionalSelection() {
         for width: CGFloat in [320, 375, 393, 440] {
             let available = CGRect(x: 8, y: 24, width: width - 16, height: 700)

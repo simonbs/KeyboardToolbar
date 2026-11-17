@@ -7,6 +7,7 @@ final class GlassKeyboardToolButton: UIButton {
     var showToolPickerDelay: TimeInterval = 0.5
     var willPresentToolPicker: (() -> Void)?
     var willPresent: (() -> Void)?
+    var pickerExpansionDidChange: ((Bool) -> Void)?
 
     private var item: KeyboardToolGroupItem
     private var timer: Timer?
@@ -120,6 +121,7 @@ final class GlassKeyboardToolButton: UIButton {
 
     /// Cancellation never performs a tool action, including interrupted touches and editor detachment.
     @objc func cancelInteraction() {
+        let wasExpanded = expandedTouchX != nil
         trackingPress = false
         isSelected = false
         timer?.invalidate()
@@ -130,6 +132,7 @@ final class GlassKeyboardToolButton: UIButton {
         expandedTouchX = nil
         presentedAnchor = nil
         selectionIndicator.isHidden = true
+        if wasExpanded { pickerExpansionDidChange?(false) }
     }
 
     @objc private func press(_ sender: UIButton, event: UIEvent?) {
@@ -171,6 +174,7 @@ final class GlassKeyboardToolButton: UIButton {
         if let picker {
             picker.beginSelection(at: convert(CGPoint(x: touchX, y: bounds.midY), to: picker))
         }
+        pickerExpansionDidChange?(true)
         feedback.selectionChanged()
     }
 

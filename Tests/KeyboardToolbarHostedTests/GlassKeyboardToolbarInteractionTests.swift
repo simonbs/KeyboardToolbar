@@ -156,6 +156,49 @@ import XCTest
         XCTAssertNil(picker(in: window))
     }
 
+    func testScrollingCancelsPendingPressAndAnExpandedPickerTemporarilyOwnsTheGesture() async throws {
+        guard #available(iOS 26, *) else {
+            throw XCTSkip("The scrollable keyboard groups use Liquid Glass.")
+        }
+        let toolbar = GlassKeyboardToolbarView()
+        var inserted: [String] = []
+        let symbol = makeItem { inserted.append($0) }
+        let groups = [
+            KeyboardToolGroup(items: [symbol, symbol]),
+            KeyboardToolGroup(items: Array(repeating: symbol, count: 6), allowsHorizontalScrolling: true),
+            KeyboardToolGroup(items: [symbol]),
+            KeyboardToolGroup(items: [symbol])
+        ]
+        toolbar.groups = groups
+        toolbar.showToolPickerDelay = 0.2
+        let window = try await makeWindow(toolbar, frame: CGRect(x: 0, y: 600, width: 393, height: 60))
+        defer { window.isHidden = true }
+        toolbar.layoutIfNeeded()
+        let scrollView = try XCTUnwrap(firstScrollView(in: toolbar))
+        let firstKey = try XCTUnwrap(scrollView.subviews.compactMap { $0 as? GlassKeyboardToolButton }.first)
+        XCTAssertTrue(scrollView.isScrollEnabled)
+
+        firstKey.sendActions(for: .touchDown)
+        XCTAssertNotNil(picker(in: window))
+        scrollView.delegate?.scrollViewWillBeginDragging?(scrollView)
+        firstKey.sendActions(for: .touchUpOutside)
+        XCTAssertTrue(inserted.isEmpty)
+        XCTAssertNil(picker(in: window))
+
+        firstKey.sendActions(for: .touchDown)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertFalse(scrollView.isScrollEnabled)
+        firstKey.sendActions(for: .touchUpInside)
+        XCTAssertEqual(inserted, ["("])
+        XCTAssertTrue(scrollView.isScrollEnabled)
+
+        let offset = scrollView.contentSize.width - scrollView.bounds.width
+        scrollView.setContentOffset(CGPoint(x: offset, y: 0), animated: false)
+        toolbar.groups = groups
+        toolbar.layoutIfNeeded()
+        XCTAssertEqual(scrollView.contentOffset.x, offset, accuracy: 0.001)
+    }
+
     private func makeItem(action: @escaping (String) -> Void) -> KeyboardToolGroupItem {
         KeyboardToolGroupItem(
             representativeTool: BlockKeyboardTool(text: "(") { action("(") },
@@ -163,7 +206,7 @@ import XCTest
         )
     }
 
-    private func makeWindow(_ button: UIButton) async throws -> UIWindow {
+    private func makeWindow(_ view: UIView, frame: CGRect = CGRect(x: 100, y: 600, width: 44, height: 44)) async throws -> UIWindow {
         // Hosted XCTest can begin before the application's first scene connects.
         let deadline = Date().addingTimeInterval(5)
         while UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).isEmpty,
@@ -178,11 +221,16 @@ import XCTest
         window.frame = CGRect(x: 0, y: 0, width: 393, height: 852)
         window.rootViewController = UIViewController()
         window.isHidden = false
-        button.frame = CGRect(x: 100, y: 600, width: 44, height: 44)
-        window.rootViewController?.view.addSubview(button)
+        view.frame = frame
+        window.rootViewController?.view.addSubview(view)
         window.layoutIfNeeded()
-        XCTAssertIdentical(button.window, window)
+        XCTAssertIdentical(view.window, window)
         return window
+    }
+
+    private func firstScrollView(in view: UIView) -> UIScrollView? {
+        if let scrollView = view as? UIScrollView { return scrollView }
+        return view.subviews.lazy.compactMap { self.firstScrollView(in: $0) }.first
     }
 
     private func picker(in window: UIWindow) -> GlassKeyboardPickerView? {

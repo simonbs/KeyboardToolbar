@@ -3,7 +3,7 @@ import UIKit
 
 /// Native glass presentation used by KeyboardToolbarView on iOS 26 and later.
 @available(visionOS, unavailable)
-final class GlassKeyboardToolbarView: UIView {
+final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
     var groups: [KeyboardToolGroup] = [] {
         didSet { updateButtons() }
     }
@@ -15,6 +15,7 @@ final class GlassKeyboardToolbarView: UIView {
 
     private let container: UIVisualEffectView
     private var capsules: [UIVisualEffectView] = []
+    private var scrollViews: [Int: GlassKeyboardGroupScrollView] = [:]
     private var buttons: [[GlassKeyboardToolButton]] = []
     private var previousSize: CGSize = .zero
 
@@ -48,10 +49,14 @@ final class GlassKeyboardToolbarView: UIView {
             previousSize = bounds.size
         }
         container.frame = bounds
-        let layout = GlassKeyboardToolbarLayout(bounds: bounds, safeAreaInsets: safeAreaInsets, groupCounts: buttons.map(\.count), groupSpacings: groups.map(\.spacing))
+        let scrollableGroups = Set(groups.indices.filter { groups[$0].allowsHorizontalScrolling })
+        let layout = GlassKeyboardToolbarLayout(bounds: bounds, safeAreaInsets: safeAreaInsets,
+                                                groupCounts: buttons.map(\.count), groupSpacings: groups.map(\.spacing),
+                                                scrollableGroups: scrollableGroups)
         if capsules.count != layout.capsuleFrames.count {
             cancelInteractions()
             capsules.forEach { $0.removeFromSuperview() }
+            scrollViews.removeAll()
             capsules = layout.capsuleFrames.map { _ in makeCapsule() }
         }
         for (index, capsule) in capsules.enumerated() {
@@ -59,10 +64,21 @@ final class GlassKeyboardToolbarView: UIView {
         }
         for (groupIndex, group) in buttons.enumerated() {
             let capsuleIndex = layout.isGrouped ? groupIndex : 0
-            let capsule = capsules[capsuleIndex]
+            let capsuleContent = capsules[capsuleIndex].contentView
+            let buttonContainer: UIView
+            if let width = layout.scrollContentWidths[groupIndex] {
+                let scrollView = scrollView(for: groupIndex, in: capsuleContent)
+                scrollView.frame = CGRect(origin: .zero, size: layout.capsuleFrames[capsuleIndex].size)
+                scrollView.contentSize = CGSize(width: width, height: scrollView.bounds.height)
+                scrollView.updateScrollingAvailability()
+                buttonContainer = scrollView
+            } else {
+                scrollViews.removeValue(forKey: groupIndex)?.removeFromSuperview()
+                buttonContainer = capsuleContent
+            }
             for (buttonIndex, button) in group.enumerated() {
-                if button.superview !== capsule.contentView {
-                    capsule.contentView.addSubview(button)
+                if button.superview !== buttonContainer {
+                    buttonContainer.addSubview(button)
                 }
                 button.frame = layout.buttonFrames[groupIndex][buttonIndex]
             }
@@ -80,6 +96,10 @@ final class GlassKeyboardToolbarView: UIView {
         buttons.flatMap { $0 }.forEach { $0.cancelInteraction() }
     }
 
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        cancelInteractions()
+    }
+
     private func updateButtons() {
         if buttons.map(\.count) == groups.map({ $0.items.count }) {
             for (group, items) in zip(buttons, groups) {
@@ -90,7 +110,7 @@ final class GlassKeyboardToolbarView: UIView {
         } else {
             cancelInteractions()
             buttons.flatMap { $0 }.forEach { $0.removeFromSuperview() }
-            buttons = groups.map { group in
+            buttons = groups.enumerated().map { index, group in
                 group.items.map { item in
                     let button = GlassKeyboardToolButton(item: item)
                     button.showToolPickerDelay = showToolPickerDelay
@@ -98,11 +118,30 @@ final class GlassKeyboardToolbarView: UIView {
                     button.willPresent = { [weak self, weak button] in
                         self?.buttons.flatMap { $0 }.filter { $0 !== button }.forEach { $0.cancelInteraction() }
                     }
+                    button.pickerExpansionDidChange = { [weak self] expanded in
+                        self?.scrollViews[index]?.isPickerExpanded = expanded
+                    }
                     return button
                 }
             }
         }
         setNeedsLayout()
+    }
+
+    private func scrollView(for groupIndex: Int, in capsuleContent: UIView) -> GlassKeyboardGroupScrollView {
+        if let scrollView = scrollViews[groupIndex] {
+            return scrollView
+        }
+        let scrollView = GlassKeyboardGroupScrollView()
+        scrollView.delegate = self
+        scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.delaysContentTouches = false
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.bounces = false
+        capsuleContent.addSubview(scrollView)
+        scrollViews[groupIndex] = scrollView
+        return scrollView
     }
 
     private func makeCapsule() -> UIVisualEffectView {
@@ -118,6 +157,22 @@ final class GlassKeyboardToolbarView: UIView {
         capsule.accessibilityIdentifier = "keyboard-toolbar-capsule"
         container.contentView.addSubview(capsule)
         return capsule
+    }
+}
+
+/// A swipe can take over a pending key press until a hold expands its picker.
+private final class GlassKeyboardGroupScrollView: UIScrollView {
+    var isPickerExpanded = false {
+        didSet { updateScrollingAvailability() }
+    }
+
+    func updateScrollingAvailability() {
+        let canScroll = contentSize.width > bounds.width + 0.001 && !isPickerExpanded
+        if isScrollEnabled != canScroll { isScrollEnabled = canScroll }
+    }
+
+    override func touchesShouldCancel(in view: UIView) -> Bool {
+        view is GlassKeyboardToolButton || super.touchesShouldCancel(in: view)
     }
 }
 
