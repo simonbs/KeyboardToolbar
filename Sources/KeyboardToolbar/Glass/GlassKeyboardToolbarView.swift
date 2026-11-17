@@ -3,7 +3,7 @@ import UIKit
 
 /// Native glass presentation used by KeyboardToolbarView on iOS 26 and later.
 @available(visionOS, unavailable)
-final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
+final class GlassKeyboardToolbarView: UIView {
     var groups: [KeyboardToolGroup] = [] {
         didSet { updateButtons() }
     }
@@ -65,22 +65,19 @@ final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
         for (groupIndex, group) in buttons.enumerated() {
             let capsuleIndex = layout.isGrouped ? groupIndex : 0
             let capsuleContent = capsules[capsuleIndex].contentView
-            let buttonContainer: UIView
-            if let width = layout.scrollContentWidths[groupIndex] {
+            let frames = layout.buttonFrames[groupIndex]
+            if let pagination = layout.pagination[groupIndex] {
                 let scrollView = scrollView(for: groupIndex, in: capsuleContent)
                 scrollView.frame = CGRect(origin: .zero, size: layout.capsuleFrames[capsuleIndex].size)
-                scrollView.contentSize = CGSize(width: width, height: scrollView.bounds.height)
-                scrollView.updateScrollingAvailability()
-                buttonContainer = scrollView
+                scrollView.layoutButtons(group, frames: frames, pagination: pagination)
             } else {
                 scrollViews.removeValue(forKey: groupIndex)?.removeFromSuperview()
-                buttonContainer = capsuleContent
-            }
-            for (buttonIndex, button) in group.enumerated() {
-                if button.superview !== buttonContainer {
-                    buttonContainer.addSubview(button)
+                for (button, frame) in zip(group, frames) {
+                    if button.superview !== capsuleContent {
+                        capsuleContent.addSubview(button)
+                    }
+                    button.frame = frame
                 }
-                button.frame = layout.buttonFrames[groupIndex][buttonIndex]
             }
         }
     }
@@ -94,10 +91,6 @@ final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
 
     @objc func cancelInteractions() {
         buttons.flatMap { $0 }.forEach { $0.cancelInteraction() }
-    }
-
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        cancelInteractions()
     }
 
     private func updateButtons() {
@@ -125,6 +118,11 @@ final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
                 }
             }
         }
+        for (group, configuration) in zip(buttons, groups) {
+            for button in group {
+                button.defersToolPickerUntilHold = configuration.allowsHorizontalScrolling
+            }
+        }
         setNeedsLayout()
     }
 
@@ -133,12 +131,7 @@ final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
             return scrollView
         }
         let scrollView = GlassKeyboardGroupScrollView()
-        scrollView.delegate = self
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.delaysContentTouches = false
-        scrollView.showsHorizontalScrollIndicator = false
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.bounces = false
+        scrollView.onBeginDragging = { [weak self] in self?.cancelInteractions() }
         capsuleContent.addSubview(scrollView)
         scrollViews[groupIndex] = scrollView
         return scrollView
@@ -157,22 +150,6 @@ final class GlassKeyboardToolbarView: UIView, UIScrollViewDelegate {
         capsule.accessibilityIdentifier = "keyboard-toolbar-capsule"
         container.contentView.addSubview(capsule)
         return capsule
-    }
-}
-
-/// A swipe can take over a pending key press until a hold expands its picker.
-private final class GlassKeyboardGroupScrollView: UIScrollView {
-    var isPickerExpanded = false {
-        didSet { updateScrollingAvailability() }
-    }
-
-    func updateScrollingAvailability() {
-        let canScroll = contentSize.width > bounds.width + 0.001 && !isPickerExpanded
-        if isScrollEnabled != canScroll { isScrollEnabled = canScroll }
-    }
-
-    override func touchesShouldCancel(in view: UIView) -> Bool {
-        view is GlassKeyboardToolButton || super.touchesShouldCancel(in: view)
     }
 }
 

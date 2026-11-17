@@ -45,7 +45,7 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
     }
 
     func testScrollingSymbolsKeepFullSizeKeysAndLeaveOtherGroupsVisible() {
-        for width: CGFloat in [320, 375, 402, 540] {
+        for (width, capacity) in [(CGFloat(320), 1), (375, 2), (402, 3), (540, 6)] {
             let bounds = CGRect(x: 0, y: 0, width: width, height: 60)
             let layout = GlassKeyboardToolbarLayout(bounds: bounds, safeAreaInsets: .zero,
                                                     groupCounts: [2, 6, 1, 1], groupSpacings: [6, 6, 6, 6],
@@ -53,22 +53,21 @@ final class GlassKeyboardToolbarLayoutTests: XCTestCase {
             XCTAssertTrue(layout.isGrouped)
             XCTAssertEqual(layout.capsuleFrames.count, 4)
             XCTAssertEqual(layout.buttonFrames.map(\.count), [2, 6, 1, 1])
-            XCTAssertEqual(Set(layout.scrollContentWidths.keys), [1])
+            XCTAssertEqual(Set(layout.pagination.keys), [1])
+            XCTAssertEqual(layout.pagination[1]?.capacity, capacity)
+            XCTAssertEqual(layout.pagination[1]?.pageCount, 6 / capacity)
             XCTAssertTrue(layout.buttonFrames.flatMap { $0 }.allSatisfy { $0.width == 44 })
-            guard let contentWidth = layout.scrollContentWidths[1], layout.capsuleFrames.count == 4 else {
-                continue
-            }
-            XCTAssertEqual(contentWidth, 298)
-            XCTAssertEqual(contentWidth > layout.capsuleFrames[1].width + 0.001, width < 540)
+            guard layout.capsuleFrames.count == 4 else { continue }
             for capsule in layout.capsuleFrames {
                 XCTAssertGreaterThanOrEqual(capsule.minX, 8)
                 XCTAssertLessThanOrEqual(capsule.maxX, width - 8 + 0.001)
             }
-            for index in [0, 2, 3] {
+            for index in layout.capsuleFrames.indices {
                 for key in layout.buttonFrames[index] {
                     XCTAssertTrue(CGRect(origin: .zero, size: layout.capsuleFrames[index].size).contains(key))
                 }
             }
+            XCTAssertEqual(layout.buttonFrames[1][0], layout.buttonFrames[1][6 - capacity])
         }
     }
 

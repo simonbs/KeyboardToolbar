@@ -12,7 +12,7 @@ public struct KeyboardToolGroup {
     public let spacing: CGFloat
     /// The items to be displayed in the group.
     public let items: [KeyboardToolGroupItem]
-    /// Lets the group scroll horizontally when its full-size keys cannot fit in the Liquid Glass toolbar.
+    /// Lets the group page horizontally when its full-size keys cannot fit in the Liquid Glass toolbar.
     public let allowsHorizontalScrolling: Bool
 
     /// Initializes a tool group.

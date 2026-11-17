@@ -8,12 +8,18 @@ final class GlassKeyboardToolButton: UIButton {
     var willPresentToolPicker: (() -> Void)?
     var willPresent: (() -> Void)?
     var pickerExpansionDidChange: ((Bool) -> Void)?
+    var defersToolPickerUntilHold = false {
+        didSet {
+            if defersToolPickerUntilHold != oldValue { cancelInteraction() }
+        }
+    }
 
     private var item: KeyboardToolGroupItem
     private var timer: Timer?
     private var picker: GlassKeyboardPickerView?
     private var selectedIndex: Int?
     private var trackingPress = false
+    private var initialTouchLocation = CGPoint.zero
     private var touchX: CGFloat = 0
     private var expandedTouchX: CGFloat?
     private var presentedAnchor: CGRect?
@@ -142,17 +148,20 @@ final class GlassKeyboardToolButton: UIButton {
         }
         willPresent?()
         trackingPress = true
-        touchX = event?.touches(for: self)?.first?.location(in: self).x ?? bounds.midX
+        initialTouchLocation = event?.touches(for: self)?.first?.location(in: self) ?? CGPoint(x: bounds.midX, y: bounds.midY)
+        touchX = initialTouchLocation.x
         isSelected = true
         selectionIndicator.isHidden = false
-        UIDevice.current.playInputClick()
+        if !defersToolPickerUntilHold { UIDevice.current.playInputClick() }
         guard !tools.isEmpty else {
             return
         }
-        willPresentToolPicker?()
-        guard trackingPress, isEnabled, window != nil else { return }
         feedback.prepare()
-        present([item.representativeTool], selectedIndex: nil)
+        if !defersToolPickerUntilHold {
+            willPresentToolPicker?()
+            guard trackingPress, isEnabled, window != nil else { return }
+            present([item.representativeTool], selectedIndex: nil)
+        }
         if showToolPickerDelay <= 0 {
             expand()
             return
@@ -168,13 +177,20 @@ final class GlassKeyboardToolButton: UIButton {
         guard trackingPress, isEnabled, window != nil, !tools.isEmpty else {
             return
         }
-        selectedIndex = 0
+        if defersToolPickerUntilHold {
+            willPresentToolPicker?()
+            guard trackingPress, isEnabled, window != nil else { return }
+        }
         expandedTouchX = touchX
+        pickerExpansionDidChange?(true)
+        // Disabling the scroll gesture can synchronously cancel the button's touch.
+        guard trackingPress, isEnabled, window != nil else { return }
+        selectedIndex = 0
+        if defersToolPickerUntilHold { UIDevice.current.playInputClick() }
         present(tools, selectedIndex: 0)
         if let picker {
             picker.beginSelection(at: convert(CGPoint(x: touchX, y: bounds.midY), to: picker))
         }
-        pickerExpansionDidChange?(true)
         feedback.selectionChanged()
     }
 
@@ -186,6 +202,12 @@ final class GlassKeyboardToolButton: UIButton {
     }
 
     func trackTouch(at location: CGPoint) {
+        guard trackingPress else { return }
+        if defersToolPickerUntilHold, expandedTouchX == nil,
+           hypot(location.x - initialTouchLocation.x, location.y - initialTouchLocation.y) > 10 {
+            cancelInteraction()
+            return
+        }
         touchX = location.x
         guard let expandedTouchX, let picker else {
             return
@@ -206,6 +228,7 @@ final class GlassKeyboardToolButton: UIButton {
             return
         }
         let tool = selectedIndex.flatMap { tools.indices.contains($0) ? tools[$0] : nil } ?? item.representativeTool
+        if defersToolPickerUntilHold, expandedTouchX == nil { UIDevice.current.playInputClick() }
         cancelInteraction()
         tool.performAction()
     }

@@ -3,11 +3,16 @@ import UIKit
 
 /// Keeps groups separate when the fixed keys and a viewport for each scrolling group can fit.
 struct GlassKeyboardToolbarLayout {
+    struct Pagination {
+        let capacity: Int
+        let pageCount: Int
+    }
+
     let isGrouped: Bool
     let capsuleFrames: [CGRect]
-    /// Button frames are relative to their capsule.
+    /// Button frames are relative to their capsule or to their page in a scrolling capsule.
     let buttonFrames: [[CGRect]]
-    let scrollContentWidths: [Int: CGFloat]
+    let pagination: [Int: Pagination]
 
     init(bounds: CGRect, safeAreaInsets: UIEdgeInsets, groupCounts: [Int], groupSpacings: [CGFloat] = [],
          scrollableGroups: Set<Int> = []) {
@@ -17,7 +22,7 @@ struct GlassKeyboardToolbarLayout {
             isGrouped = false
             capsuleFrames = []
             buttonFrames = []
-            scrollContentWidths = [:]
+            pagination = [:]
             return
         }
         let gap: CGFloat = 8
@@ -52,19 +57,26 @@ struct GlassKeyboardToolbarLayout {
         var x = safeAreaInsets.left + 8 + (availableWidth - totalWidth) / 2
         var frames: [CGRect] = []
         var keys: [[CGRect]] = []
-        var contentWidths: [Int: CGFloat] = [:]
+        var pagedGroups: [Int: Pagination] = [:]
         var keyX = padding
         if !isGrouped {
             frames.append(CGRect(x: x, y: 6, width: totalWidth, height: 48))
         }
         for (groupIndex, groupCount) in groupCounts.enumerated() {
             let spacing = isGrouped ? spacings[groupIndex] : 0
-            let keyWidth = scrollWidths[groupIndex] == nil ? buttonWidth : fullKeyWidth
             if isGrouped {
                 let width: CGFloat
                 if let contentWidth = scrollWidths[groupIndex] {
                     width = buttonWidth + (contentWidth - buttonWidth) * extraFraction + 2 * padding
-                    contentWidths[groupIndex] = contentWidth + 2 * padding
+                    let usableWidth = width - 2 * padding
+                    let pagedKeyWidth = min(fullKeyWidth, usableWidth)
+                    let capacity = max(1, Int(((usableWidth + spacing + 0.001) / (pagedKeyWidth + spacing)).rounded(.down)))
+                    let pageCount = (groupCount + capacity - 1) / capacity
+                    pagedGroups[groupIndex] = Pagination(capacity: capacity, pageCount: pageCount)
+                    keys.append((0..<groupCount).map { index in
+                        let keyX = padding + CGFloat(index % capacity) * (pagedKeyWidth + spacing)
+                        return CGRect(x: keyX, y: 2, width: pagedKeyWidth, height: 44)
+                    })
                 } else {
                     width = CGFloat(groupCount) * buttonWidth + spacingWidths[groupIndex] + 2 * padding
                 }
@@ -72,14 +84,15 @@ struct GlassKeyboardToolbarLayout {
                 x += width + gap
                 keyX = padding
             }
+            if pagedGroups[groupIndex] != nil { continue }
             keys.append((0..<groupCount).map { _ in
-                defer { keyX += keyWidth + spacing }
-                return CGRect(x: keyX, y: 2, width: keyWidth, height: 44)
+                defer { keyX += buttonWidth + spacing }
+                return CGRect(x: keyX, y: 2, width: buttonWidth, height: 44)
             })
         }
         capsuleFrames = frames
         buttonFrames = keys
-        scrollContentWidths = contentWidths
+        pagination = pagedGroups
     }
 }
 

@@ -156,12 +156,14 @@ import XCTest
         XCTAssertNil(picker(in: window))
     }
 
-    func testScrollingCancelsPendingPressAndAnExpandedPickerTemporarilyOwnsTheGesture() async throws {
+    func testPaginatedGroupDefersPickerAndSnapsToWholePages() async throws {
         guard #available(iOS 26, *) else {
             throw XCTSkip("The scrollable keyboard groups use Liquid Glass.")
         }
         let toolbar = GlassKeyboardToolbarView()
         var inserted: [String] = []
+        var pickerPresentationCount = 0
+        toolbar.willPresentToolPicker = { pickerPresentationCount += 1 }
         let symbol = makeItem { inserted.append($0) }
         let groups = [
             KeyboardToolGroup(items: [symbol, symbol]),
@@ -175,28 +177,50 @@ import XCTest
         defer { window.isHidden = true }
         toolbar.layoutIfNeeded()
         let scrollView = try XCTUnwrap(firstScrollView(in: toolbar))
-        let firstKey = try XCTUnwrap(scrollView.subviews.compactMap { $0 as? GlassKeyboardToolButton }.first)
+        let firstPage = try XCTUnwrap(scrollView.subviews.first { $0.subviews.contains { $0 is GlassKeyboardToolButton } })
+        let firstKey = try XCTUnwrap(firstPage.subviews.compactMap { $0 as? GlassKeyboardToolButton }.first)
         XCTAssertTrue(scrollView.isScrollEnabled)
+        XCTAssertEqual(scrollView.contentSize.width, scrollView.bounds.width * 2, accuracy: 0.001)
 
         firstKey.sendActions(for: .touchDown)
-        XCTAssertNotNil(picker(in: window))
+        XCTAssertNil(picker(in: window))
+        XCTAssertEqual(pickerPresentationCount, 0)
+        firstKey.sendActions(for: .touchUpInside)
+        XCTAssertEqual(inserted, ["("])
+
+        firstKey.sendActions(for: .touchDown)
+        firstKey.trackTouch(at: CGPoint(x: firstKey.bounds.midX + 12, y: firstKey.bounds.midY))
+        try await Task.sleep(nanoseconds: 300_000_000)
+        firstKey.sendActions(for: .touchUpOutside)
+        XCTAssertEqual(inserted, ["("])
+        XCTAssertEqual(pickerPresentationCount, 0)
+
+        firstKey.sendActions(for: .touchDown)
         scrollView.delegate?.scrollViewWillBeginDragging?(scrollView)
         firstKey.sendActions(for: .touchUpOutside)
-        XCTAssertTrue(inserted.isEmpty)
+        XCTAssertEqual(inserted, ["("])
         XCTAssertNil(picker(in: window))
 
         firstKey.sendActions(for: .touchDown)
         try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertNotNil(picker(in: window))
+        XCTAssertEqual(pickerPresentationCount, 1)
         XCTAssertFalse(scrollView.isScrollEnabled)
         firstKey.sendActions(for: .touchUpInside)
-        XCTAssertEqual(inserted, ["("])
+        XCTAssertEqual(inserted, ["(", "("])
         XCTAssertTrue(scrollView.isScrollEnabled)
 
-        let offset = scrollView.contentSize.width - scrollView.bounds.width
-        scrollView.setContentOffset(CGPoint(x: offset, y: 0), animated: false)
+        let width = scrollView.bounds.width
+        var target = CGPoint(x: width * 0.2, y: 0)
+        scrollView.delegate?.scrollViewWillEndDragging?(scrollView, withVelocity: CGPoint(x: 1, y: 0),
+                                                        targetContentOffset: &target)
+        XCTAssertEqual(target.x, width, accuracy: 0.001)
+        scrollView.setContentOffset(target, animated: false)
+        scrollView.delegate?.scrollViewDidEndDecelerating?(scrollView)
+        XCTAssertTrue(firstPage.accessibilityElementsHidden)
         toolbar.groups = groups
         toolbar.layoutIfNeeded()
-        XCTAssertEqual(scrollView.contentOffset.x, offset, accuracy: 0.001)
+        XCTAssertEqual(scrollView.contentOffset.x, width, accuracy: 0.001)
     }
 
     private func makeItem(action: @escaping (String) -> Void) -> KeyboardToolGroupItem {
